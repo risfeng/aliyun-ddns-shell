@@ -12,9 +12,8 @@
 #
 #############################################################
 
-#阿里云基础配置
-access_key_id=LTA******************r
-access_key_secret=Yx*******************KE
+#加载配置信息
+source ./config
 
 #定义是否ping通标识
 is_ping=false
@@ -28,11 +27,8 @@ function test_ping() {
     fi
 }
 
-#将ping 的域名放到数组
-PING_DOMAIN_LIST="baidu.com1"
-
 #遍历ping域名列表 最多检测三次ping成功返回true 反之返回 false
-for ip in $PING_DOMAIN_LIST; do
+for ip in $ping_domain_list; do
     echo "ping" $ip "1 times..."
     test_ping
     echo "ping" $ip "2 times..."
@@ -50,18 +46,32 @@ function get_wan_ip() {
     echo "get wan ip : "$wan_ip
 }
 
-#hmac-sha1 签名
+#计算签名的字符串
 function string_to_sign() {
-    #todo
-    return $string | openssl dgst -hmac $key -sha1 -binary | base64
+    #todo::
+    echo 'todo:::'
+}
+
+#hmac-sha1 签名
+function get_signature() {
+    echo -n $1 | openssl dgst -sha1 -hmac $2 -binary | base64
 }
 
 #调用阿里云DNS更新接口
 function update_doamin_dns() {
     get_wan_ip
     #todo:
-    sign=$(string_to_sign "" "")
-    echo "qim==>>>>>  "$sign
+    echo "读取配置文件ApiHost=" $api_host
+
+    #签名Key $access_key_secret'&'
+    signature_key='testsecret&'
+
+    #签名消息 todo:::
+    signature_message="GET&%2F&AccessKeyId%3Dtestid%26Action%3DDescribeDomainRecords%26DomainName%3Dexample.com%26Format%3DXML%26SignatureMethod%3DHMAC-SHA1%26SignatureNonce%3Df59ed6a9-83fc-473b-9cc6-99c95df3856e%26SignatureVersion%3D1.0%26Timestamp%3D2016-03-24T16%253A41%253A54Z%26Version%3D2015-01-09"
+
+    signature=$(get_signature $signature_message $signature_key)
+
+    echo "============================>>>>>  "$signature
     echo "update domian dns success!!"
 }
 

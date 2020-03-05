@@ -1,0 +1,16 @@
+#api 主机地址
+api_host=https://aliyun.aliyun.com
+
+#鉴权配置
+access_key_id=LTAI4Fj3WjLhv5iG8QFHfMqv
+access_key_secret=OmSCjGIcuiIXh82kobUjgcRrkNLGhg
+
+#检测域名列表（先ping 不通则解析DNS）
+ping_domain_list="ad.adotcode.com"
+
+#一级域名 eg: example.com
+first_level_domain=adotcode.com
+
+#一级域名 eg: test.example.com
+second_level_domain=ad.adotcode.com
+
