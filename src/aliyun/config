@@ -1,7 +1,0 @@
-    var_first_level_domain="adotcode.com"
-    var_second_level_domain="dns"
-    var_domian_ttl="600"
-    var_access_key_id="LTAI4FjbsvRBZUHnKcDxiagL"
-    var_access_key_secret="D1CWnzHcKsXAHniJOgO6lSEahGxBiq"
-    var_local_wan_ip="curl -s http://members.3322.org/dyndns/getip"
-    var_domian_server_ip="nslookup"
