@@ -711,7 +711,6 @@ function main_fun_config_and_run(){
 }
 # 主入口2 仅运行
 function main_fun_only_run(){
-    echo "messah api =${var_push_message_api}"
     fun_check_config_file 
     if [[ "${var_is_exist_config_file}" = false ]]; then
         echo -e "${message_error_tag}未检测到配置文件,请直接运行程序配置!"
