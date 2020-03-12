@@ -4,6 +4,9 @@
 build_date="20200307"
 build_version="v1.0.0"
 
+#当前时间 格式：2020-03-12 14:36:31
+NOW_DATE=$(date "+%Y-%m-%d %H:%M:%S")
+
 #当前时间
 echo "=========== $(date) ==========="
 
@@ -19,11 +22,11 @@ color_white_start="\033[37m"
 color_end="\033[0m"
 
 #提示信息级别定义
-message_info_tag="${color_sky_blue_start}[Info] ${color_end}"
-message_warning_tag="${color_yellow_start}[Warning] ${color_end}"
-message_error_tag="${color_red_start}[Error] ${color_end}"
-message_success_tag="${color_green_start}[Success] ${color_end}"
-message_fail_tag="${color_red_start}[Failed] ${color_end}"
+message_info_tag="${color_sky_blue_start}[Info] ${NOW_DATE} ${color_end}"
+message_warning_tag="${color_yellow_start}[Warning] ${NOW_DATE} ${color_end}"
+message_error_tag="${color_red_start}[Error] ${NOW_DATE} ${color_end}"
+message_success_tag="${color_green_start}[Success] ${NOW_DATE} ${color_end}"
+message_fail_tag="${color_red_start}[Failed] ${NOW_DATE} ${color_end}"
 
 #功能、版本信息描述输出
 function fun_show_version_info(){
@@ -56,8 +59,10 @@ DEBIAN_OS_RELEASE="debian"
 
 #配置文件路径
 CONFIG_FILE_PATH="./config"
+#日志储存目录
+LOG_FILE_PATH="./log-info.log"
 
-# 当前时间戳
+#当前时间戳
 var_now_timestamp=""
 
 #是否root权限执行
@@ -129,20 +134,19 @@ function fun_ping() {
 # 检测是否通外网
 function fun_check_online(){
     for((i=1;i<=$var_check_online_retry_times;i++)); do
-        echo -e "${message_info_tag}ping ${var_check_online_url}${color_red_start} $i ${color_end}times......"
+        fun_wirte_log "${message_info_tag}ping ${var_check_online_url}${color_red_start} $i ${color_end}times......"
         var_is_online=$(fun_ping ${var_check_online_url})
         if [[ ${var_is_online} = true ]]; then
-            echo -e "${message_success_tag}ping ${var_check_online_url} success!"
+            fun_wirte_log "${message_success_tag}ping ${var_check_online_url} success!"
             break
         else
-            echo -e "${message_fail_tag}ping ${var_check_online_url} fail."
+            fun_wirte_log "${message_fail_tag}ping ${var_check_online_url} fail."
         fi
     done
     if [[ ${var_is_online} = false ]]; then
-        echo -e "${message_error_tag}检测当前无外网环境,重试${$var_check_online_retry_times}次ping ${var_check_online_url}都失败,程序终止执行."
+        fun_wirte_log "${message_error_tag}检测当前无外网环境,重试${$var_check_online_retry_times}次ping ${var_check_online_url}都失败,程序终止执行."
         exit 1
     fi
-    
 }
 
 # 检测root权限
@@ -179,39 +183,39 @@ function fun_check_run_environment(){
 
 # 获取本机外网IP
 function fun_get_local_wan_ip(){
-    echo -e "${message_info_tag}正在获取本机外网ip......"
+    fun_wirte_log "${message_info_tag}正在获取本机外网ip......"
     if [[ "${var_local_wan_ip}" = "" ]]; then
-        echo -e "${message_error_tag}获取外网ip配置项为空或无效."
-        echo -e "${message_fail_tag}程序终止执行......"
+        fun_wirte_log "${message_error_tag}获取外网ip配置项为空或无效."
+        fun_wirte_log "${message_fail_tag}程序终止执行......"
         exit 1
     fi
     var_local_wan_ip=`${var_local_wan_ip}`
     if [[ "${var_local_wan_ip}" = "" ]]; then
-        echo -e "${message_error_tag}获取外网ip失败,请检查var_local_wan_ip配置项命令是否正确."
-        echo -e "${message_fail_tag}程序终止执行......"
+        fun_wirte_log "${message_error_tag}获取外网ip失败,请检查var_local_wan_ip配置项命令是否正确."
+        fun_wirte_log "${message_fail_tag}程序终止执行......"
         exit 1
     else
-        echo -e "${message_info_tag}本机外网ip:${var_local_wan_ip}"
+        fun_wirte_log "${message_info_tag}本机外网ip:${var_local_wan_ip}"
     fi
 }
 
 # 获取DDNS域名当前解析记录IP
 function fun_get_domian_server_ip(){
-    echo -e "${message_info_tag}正在获取${var_second_level_domain}.${var_first_level_domain}的ip......"
+    fun_wirte_log "${message_info_tag}正在获取${var_second_level_domain}.${var_first_level_domain}的ip......"
     if [[ "${var_domian_server_ip}" = "nslookup" ]]; then
         var_domian_server_ip=`nslookup -sil ${var_second_level_domain}.${var_first_level_domain} 2>/dev/null | grep Address: | sed 1d | sed s/Address://g | sed 's/ //g'`
     else
         var_domian_server_ip=`${var_domian_server_ip} | sed 's/;/ /g'`
     fi
-    echo -e "${message_info_tag}域名${var_second_level_domain}.${var_first_level_domain}的当前ip:${var_domian_server_ip}"
+    fun_wirte_log "${message_info_tag}域名${var_second_level_domain}.${var_first_level_domain}的当前ip:${var_domian_server_ip}"
 }
 
 # 判断当前外网ip与域名到服务ip是否相同
 function fun_is_wan_ip_and_domain_ip_same(){
     if [[ "${var_domian_server_ip}" != "" ]]; then
         if [[ "${var_domian_server_ip}" =~ "${var_local_wan_ip}" ]]; then
-            echo -e "${message_info_tag}当前外网ip:[${var_local_wan_ip}]与${var_second_level_domain}.${var_first_level_domain}($var_domian_server_ip)的ip相同."
-            echo -e "${message_success_tag}本地ip与域名解析ip未发生任何变动,无需更改,程序退出."
+            fun_wirte_log "${message_info_tag}当前外网ip:[${var_local_wan_ip}]与${var_second_level_domain}.${var_first_level_domain}($var_domian_server_ip)的ip相同."
+            fun_wirte_log "${message_success_tag}本地ip与域名解析ip未发生任何变动,无需更改,程序退出."
             exit 1
         fi
     fi
@@ -220,70 +224,69 @@ function fun_is_wan_ip_and_domain_ip_same(){
 # 安装运行必需组件
 function fun_install_run_environment(){
     if [[ ${var_is_installed_curl} = false ]] || [[ ${var_is_installed_openssl} = false ]] || [[ ${var_is_installed_nslookup} = false ]]; then
-        echo -e "${message_warning_tag}检测到缺少运行必需组件,正在尝试安装......"
+        fun_wirte_log "${message_warning_tag}检测到缺少运行必需组件,正在尝试安装......"
         # 有root权限
         if [[ "${var_is_root_execute}" = true ]]; then
             if [[ "${var_os_release}" = "${CENT_OS_RELEASE}" ]]; then
-                echo -e "${message_info_tag}检测到当前系统发行版本为:${CENT_OS_RELEASE}"
-                echo -e "${message_info_tag}正在安装必需组件......"
+                fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${CENT_OS_RELEASE}"
+                fun_wirte_log "${message_info_tag}正在安装必需组件......"
                 yum install curl openssl bind-utils -y
                 elif [[ "${var_os_release}" = "${UBUNTU_OS_RELEASE}" ]];then
-                echo -e "${message_info_tag}检测到当前系统发行版本为:${UBUNTU_OS_RELEASE}"
-                echo -e "${message_info_tag}正在安装必需组件......"
+                fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${UBUNTU_OS_RELEASE}"
+                fun_wirte_log "${message_info_tag}正在安装必需组件......"
                 apt-get install curl openssl bind-utils -y
                 elif [[ "${var_os_release}" = "${DEBIAN_OS_RELEASE}" ]]; then
-                echo -e "${message_info_tag}检测到当前系统发行版本为:${DEBIAN_OS_RELEASE}"
-                echo -e "${message_info_tag}正在安装必需组件......"
+                fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${DEBIAN_OS_RELEASE}"
+                fun_wirte_log "${message_info_tag}正在安装必需组件......"
                 apt-get install curl openssl bind-utils -y
             else
-                echo -e "${message_warning_tag}当前系统是:${var_os_release},不支持自动安装必需组件,建议手动安装【curl、openssl、bind-utils】"
+                fun_wirte_log "${message_warning_tag}当前系统是:${var_os_release},不支持自动安装必需组件,建议手动安装【curl、openssl、bind-utils】"
             fi
             if [[ -f "/usr/bin/curl" ]]; then
                 var_is_installed_curl=true
             else
                 var_is_installed_curl=false
-                echo -e "${message_error_tag}curl组件自动安装失败!可能会影响到程序运行,建议手动安装!"
+                fun_wirte_log "${message_error_tag}curl组件自动安装失败!可能会影响到程序运行,建议手动安装!"
             fi
             if [[ -f "/usr/bin/openssl" ]]; then
                 var_is_installed_openssl=true
             else
                 var_is_installed_openssl=false
-                echo -e "${message_error_tag}openssl组件自动安装失败!可能会影响到程序运行,建议手动安装!"
+                fun_wirte_log "${message_error_tag}openssl组件自动安装失败!可能会影响到程序运行,建议手动安装!"
             fi
             if [[ -f "/usr/bin/nslookup" ]]; then
                 var_is_installed_nslookup=true
             else
                 var_is_installed_nslookup=false
-                echo -e "${message_error_tag}nslokkup组件自动安装失败!可能会影响到程序运行,建议手动安装!"
+                fun_wirte_log "${message_error_tag}nslokkup组件自动安装失败!可能会影响到程序运行,建议手动安装!"
             fi
         elif [[ -f "/usr/bin/sudo" ]]; then
-            echo -e "${message_warning_tag}当前脚本未以root权限执行,正在尝试以sudo命令安装必需组件......"
+            fun_wirte_log "${message_warning_tag}当前脚本未以root权限执行,正在尝试以sudo命令安装必需组件......"
            if [[ "${var_os_release}" = "${CENT_OS_RELEASE}" ]]; then
-                echo -e "${message_info_tag}检测到当前系统发行版本为:${CENT_OS_RELEASE}"
-                echo -e "${message_info_tag}正在以sudo安装必需组件......"
+                fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${CENT_OS_RELEASE}"
+                fun_wirte_log "${message_info_tag}正在以sudo安装必需组件......"
                 sudo yum install curl openssl bind-utils -y
                 elif [[ "${var_os_release}" = "${UBUNTU_OS_RELEASE}" ]];then
-                echo -e "${message_info_tag}检测到当前系统发行版本为:${UBUNTU_OS_RELEASE}"
-                echo -e "${message_info_tag}正在以sudo安装必需组件......"
+                fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${UBUNTU_OS_RELEASE}"
+                fun_wirte_log "${message_info_tag}正在以sudo安装必需组件......"
                 sudo apt-get install curl openssl bind-utils -y
                 elif ["${var_os_release}" = "${DEBIAN_OS_RELEASE}" ]; then
-                echo -e "${message_info_tag}检测到当前系统发行版本为:${DEBIAN_OS_RELEASE}"
-                echo -e "${message_info_tag}正在以sudo安装必需组件......"
+                fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${DEBIAN_OS_RELEASE}"
+                fun_wirte_log "${message_info_tag}正在以sudo安装必需组件......"
                 sudo apt-get install curl openssl bind-utils -y
             else
-                echo -e "${message_warning_tag}当前系统是:${var_os_release},不支持自动安装必需组件,建议手动安装【curl、openssl、bind-utils】"
+                fun_wirte_log "${message_warning_tag}当前系统是:${var_os_release},不支持自动安装必需组件,建议手动安装【curl、openssl、bind-utils】"
             fi
         else
-            echo -e "${message_error_tag}系统缺少必需组件且无法自动安装,建议手动安装。"
+            fun_wirte_log "${message_error_tag}系统缺少必需组件且无法自动安装,建议手动安装。"
         fi
     fi
-    
 }
 
 # 检测配置文件
 function fun_check_config_file(){
     if [[ -f "${CONFIG_FILE_PATH}" ]]; then
-        echo -e "${message_info_tag}检测到配置文件,自动加载现有配置信息。可通过菜单选项【恢复出厂设置】重置。"
+       fun_wirte_log "${message_info_tag}检测到配置文件,自动加载现有配置信息。可通过菜单选项【恢复出厂设置】重置。"
         #加载配置文件
         source ${CONFIG_FILE_PATH}
         if [[ "${var_first_level_domain}" = "" ]] || [[ "${var_second_level_domain}" = "" ]] || [[ "${var_domian_ttl}" = "" ]] \
@@ -291,7 +294,7 @@ function fun_check_config_file(){
         || [[ "${var_domian_server_ip}" = "" ]] || [[ "${var_check_online_url}" = "" ]] || [[ "${var_check_online_retry_times}" = "" ]] \
         || [[ "${var_aliyun_ddns_api_host}" = "" ]] \
         || [[ "${var_enable_message_push}" = true && "${var_push_message_access_token}" = "" && "${var_push_message_secret}" = "" ]] ; then
-            echo -e "${message_error_tag}配置文件有误,请检查配置文件,建议清理后重新配置!程序退出执行."
+            fun_wirte_log "${message_error_tag}配置文件有误,请检查配置文件,建议清理后重新配置!程序退出执行."
             exit 1
         fi
         var_is_exist_config_file=true
@@ -446,7 +449,7 @@ function fun_set_config(){
 # 保存配置文件
 function fun_save_config(){
     # 写入配置文件
-    echo -e "${message_info_tag}正在保存配置文件......"
+    fun_wirte_log "${message_info_tag}正在保存配置文件......"
     if [[ "${CONFIG_FILE_PATH}" = "" ]]; then
         CONFIG_FILE_PATH="./config"
     fi
@@ -464,13 +467,11 @@ function fun_save_config(){
     var_push_message_secret="${var_push_message_secret}"
 
 EOF
-    echo -e "${message_success_tag}配置文件保存成功."
-    echo -e "${message_info_tag}正在加载配置文件......"
+    fun_wirte_log "${message_success_tag}配置文件保存成功."
+    fun_wirte_log "${message_info_tag}正在加载配置文件......"
     source ${CONFIG_FILE_PATH}
-    echo -e "${message_success_tag}配置文件加载成功."
+    fun_wirte_log "${message_success_tag}配置文件加载成功."
 }
-
-
 
 # 帮助文档
 function fun_help_document(){
@@ -560,7 +561,7 @@ function fun_help_document(){
 
 # 获取当前时间戳
 function fun_get_now_timestamp(){
-    echo -e "${message_info_tag}正在生成时间戳......"
+    fun_wirte_log "${message_info_tag}正在生成时间戳......"
     var_now_timestamp=`date -u "+%Y-%m-%dT%H%%3A%M%%3A%SZ"`
 }
 
@@ -626,31 +627,41 @@ function fun_update_record_send() {
 
 # 更新域名解析记录值
 function fun_update_record(){
-    echo -e "${message_info_tag}正在更新域名解析记录值......"
+    fun_wirte_log "${message_info_tag}正在更新域名解析记录值......"
     if [[ "${var_domian_record_id}" = "" ]]; then
-        echo -e "${message_info_tag}正在获取record_id......"
+        fun_wirte_log "${message_info_tag}正在获取record_id......"
         var_domian_record_id=`fun_query_record_id_send | fun_get_record_id_regx`
         if [[ "${var_domian_record_id}" = "" ]]; then
-            echo -e "${message_warning_tag}获取record_id为空,可能没有获取到有效的解析记录(record_id=$var_domian_record_id)"
+            fun_wirte_log "${message_warning_tag}获取record_id为空,可能没有获取到有效的解析记录(record_id=$var_domian_record_id)"
         else
-            echo -e "${message_info_tag}获取到到record_id=$var_domian_record_id"
-            echo -e "${message_info_tag}正在更新解析记录:[$var_second_level_domain.$var_first_level_domain]的ip为[$var_local_wan_ip]......"
+            fun_wirte_log "${message_info_tag}获取到到record_id=$var_domian_record_id"
+            fun_wirte_log "${message_info_tag}正在更新解析记录:[$var_second_level_domain.$var_first_level_domain]的ip为[$var_local_wan_ip]......"
             fun_update_record_send ${var_domian_record_id}
-            echo -e "\n${message_info_tag}已经更新record_id=${var_domian_record_id}的记录"
+            fun_wirte_log "\n${message_info_tag}已经更新record_id=${var_domian_record_id}的记录"
         fi
     fi
     if [[ "${var_domian_record_id}" = "" ]]; then
         # 未能获取到domian_record_id
-        echo -e "${message_fail_tag}域名解析记录更新失败!"
+        fun_wirte_log "${message_fail_tag}域名解析记录更新失败!"
         fun_push_message "[失败]域名解析记录更新失败,获取的record_id为空，请检查域名解析记录是否存在或配置的阿里云access_key_id是否禁用或变更!"
         exit 1
     else
         # 更新成功
-        echo -e "${message_success_tag}域名[$var_second_level_domain.$var_first_level_domain](新IP:$var_local_wan_ip)记录更新成功。"
+        fun_wirte_log "${message_success_tag}域名[$var_second_level_domain.$var_first_level_domain](新IP:$var_local_wan_ip)记录更新成功。"
         fun_push_message "[成功]域名[$var_second_level_domain.$var_first_level_domain](新IP:$var_local_wan_ip)记录更新成功。"
         exit 0
     fi
 }
+
+# 写日志到文件并显示 fun_wirte_log "日志内容"
+function fun_wirte_log(){
+    log_content="$1"
+    echo -e "$log_content"
+    # 处理样式 todo
+    # log_content=perl -e "${log_content}" | sed 's/\x1b\[[0-9;]*[mGKH]//g'
+    echo "$log_content" >> ${LOG_FILE_PATH}
+}
+
 # 消息推送
 function fun_push_message(){
     fun_send_message_to_ding_ding "$1"
@@ -669,9 +680,9 @@ function fun_send_message_to_ding_ding(){
                 }
         }"
         if [[ "$?" -eq "0" ]]; then
-            echo -e "\n${message_success_tag}消息推送成功,服务器ip变动消息已推送钉钉机器人."
+            fun_wirte_log "\n${message_success_tag}消息推送成功,服务器ip变动消息已推送钉钉机器人."
         else
-            echo -e "${message_warning_tag}消息推送失败,请检查。"
+           fun_wirte_log "${message_warning_tag}消息推送失败,请检查。"
         fi
     fi
 }
@@ -691,7 +702,13 @@ function fun_restore_settings(){
     var_enable_message_push=false
     var_push_message_access_token=""
     var_push_message_secret=""
-    echo -e "${message_success_tag}所有配置项重置成功!"
+    fun_wirte_log "${message_success_tag}所有配置项重置成功!"
+}
+
+# 清除日志文件
+function fun_clearn_logs(){
+    rm -f ${LOG_FILE_PATH}
+    echo -e "${message_success_tag}日志文件清理成功!"
 }
 
 # 主入口1 配置并运行
@@ -711,9 +728,9 @@ function main_fun_config_and_run(){
 }
 # 主入口2 仅运行
 function main_fun_only_run(){
-    fun_check_config_file 
-    if [[ "${var_is_exist_config_file}" = false ]]; then
-        echo -e "${message_error_tag}未检测到配置文件,请直接运行程序配置!"
+    fun_check_config_file
+    if [[ "${var_is_exist_config_file}" != true ]]; then
+        fun_wirte_log "${message_error_tag}未检测到配置文件,请直接运行程序配置!"
         exit 1
     fi
     fun_check_run_environment
@@ -734,14 +751,21 @@ function main_fun_only_config(){
     fun_check_config_file
     fun_set_config
     fun_save_config
-    echo -e "${message_success_tag}配置完成!"
+    fun_wirte_log "${message_success_tag}配置完成!"
     exit 0
 }
-# 恢复出厂设置
+# 主入口4 恢复出厂设置
 function main_fun_restore_settings(){
-    echo -e "${message_info_tag}正在恢复出厂设置......"
+    fun_wirte_log "${message_info_tag}正在恢复出厂设置......"
     fun_restore_settings
-    echo -e "${message_success_tag}恢复出厂设置成功,可重新运行程序进行配置。"
+    fun_wirte_log "${message_success_tag}恢复出厂设置成功,可重新运行程序进行配置。"
+    exit 0
+}
+
+# 主入口5 清理日志文件
+function main_fun_clearn_logs(){
+    echo -e "${message_info_tag}正在清理日志文件......"
+    fun_clearn_logs
     exit 0
 }
 
@@ -768,6 +792,9 @@ case "$1" in
     "-version")
         main_fun_show_version
     ;;
+    "-clearn")
+        main_fun_clearn_logs
+    ;;
     *)
         echo -e "${color_blue_start}===阿里云域名动态IP自动解析小脚本===${color_end}
 使用方法 (Usage):
@@ -775,13 +802,14 @@ aliyun-ddns.sh -config -run     配置并执行脚本
 aliyun-ddns.sh -run             执行脚本（前提需要有配置文件）
 aliyun-ddns.sh -config          仅配置信息
 aliyun-ddns.sh -restore         恢复出厂设置（会清除配置文件等）
+aliyun-ddns.sh -clearn          清理日志文件
 aliyun-ddns.sh -version         显示脚本说明及版本信息
         "
     ;;
 esac
 
 echo -e "${message_info_tag}选择需要执行的功能"
-echo -e "\n 1.配置并执行脚本 \n 2.仅配置 \n 3.仅执行脚本 \n 4.恢复出厂设置 \n 0.退出 \n"
+echo -e "\n 1.配置并执行脚本 \n 2.仅配置 \n 3.仅执行脚本 \n 4.恢复出厂设置 \n 5.清理日志文件 \n 0.退出 \n"
 read -p "请输入你的选择（输入数字）:" run_function
 
 if [[ "${run_function}" == "1" ]]; then
@@ -792,6 +820,8 @@ if [[ "${run_function}" == "1" ]]; then
     main_fun_only_run
     elif [[ "${run_function}" == "4" ]]; then
     main_fun_restore_settings
+    elif [[ "${run_function}" == "5" ]]; then
+    main_fun_clearn_logs
 else
     exit 0
 fi
