@@ -22,11 +22,11 @@ color_white_start="\033[37m"
 color_end="\033[0m"
 
 #提示信息级别定义
-message_info_tag="${color_sky_blue_start}[Info] ${NOW_DATE} ${color_end}"
+message_info_tag="${color_sky_blue_start}[Info]    ${NOW_DATE} ${color_end}"
 message_warning_tag="${color_yellow_start}[Warning] ${NOW_DATE} ${color_end}"
-message_error_tag="${color_red_start}[Error] ${NOW_DATE} ${color_end}"
+message_error_tag="${color_red_start}[Error]   ${NOW_DATE} ${color_end}"
 message_success_tag="${color_green_start}[Success] ${NOW_DATE} ${color_end}"
-message_fail_tag="${color_red_start}[Failed] ${NOW_DATE} ${color_end}"
+message_fail_tag="${color_red_start}[Failed]  ${NOW_DATE} ${color_end}"
 
 #功能、版本信息描述输出
 function fun_show_version_info(){
@@ -134,13 +134,13 @@ function fun_ping() {
 # 检测是否通外网
 function fun_check_online(){
     for((i=1;i<=$var_check_online_retry_times;i++)); do
-        fun_wirte_log "${message_info_tag}ping ${var_check_online_url}${color_red_start} $i ${color_end}times......"
+        fun_wirte_log "${message_info_tag}正在尝试检测外网:ping ${var_check_online_url}${color_red_start} $i ${color_end}times......"
         var_is_online=$(fun_ping ${var_check_online_url})
         if [[ ${var_is_online} = true ]]; then
-            fun_wirte_log "${message_success_tag}ping ${var_check_online_url} success!"
+            fun_wirte_log "${message_success_tag}检测外网成功!"
             break
         else
-            fun_wirte_log "${message_fail_tag}ping ${var_check_online_url} fail."
+            fun_wirte_log "${message_fail_tag}外网不通，ping ${var_check_online_url} fail."
         fi
     done
     if [[ ${var_is_online} = false ]]; then
@@ -278,7 +278,7 @@ function fun_install_run_environment(){
                 fun_wirte_log "${message_warning_tag}当前系统是:${var_os_release},不支持自动安装必需组件,建议手动安装【curl、openssl、bind-utils】"
             fi
         else
-            fun_wirte_log "${message_error_tag}系统缺少必需组件且无法自动安装,建议手动安装。"
+            fun_wirte_log "${message_error_tag}系统缺少必需组件且无法自动安装,建议手动安装."
         fi
     fi
 }
@@ -286,7 +286,7 @@ function fun_install_run_environment(){
 # 检测配置文件
 function fun_check_config_file(){
     if [[ -f "${CONFIG_FILE_PATH}" ]]; then
-       fun_wirte_log "${message_info_tag}检测到配置文件,自动加载现有配置信息。可通过菜单选项【恢复出厂设置】重置。"
+       fun_wirte_log "${message_info_tag}检测到配置文件,自动加载现有配置信息。可通过菜单选项【恢复出厂设置】重置."
         #加载配置文件
         source ${CONFIG_FILE_PATH}
         if [[ "${var_first_level_domain}" = "" ]] || [[ "${var_second_level_domain}" = "" ]] || [[ "${var_domian_ttl}" = "" ]] \
@@ -590,7 +590,7 @@ function fun_get_url_encryption() {
 
 #hmac-sha1 签名 usage: get_signature "签名算法" "加密串" "key"
 function get_signature() {
-    echo -n "$2" | openssl dgst -$1 -hmac "$3" -binary | base64
+    echo -ne "$2" | openssl dgst -$1 -hmac "$3" -binary | base64
 }
 
 # 生成uuid
@@ -598,7 +598,12 @@ function fun_get_uuid(){
     echo $(uuidgen | tr '[A-Z]' '[a-z]')
 }
 
-# 发送请求 eg:fun_send_request "GET" "Action" "动态请求参数（看说明）"
+# json转换函数 fun_parse_json "json" "key_name"
+function fun_parse_json(){
+    echo "${1//\"/}" | sed "s/.*$2:\([^,}]*\).*/\1/"
+}
+
+# 发送请求 eg:fun_send_request "GET" "Action" "动态请求参数（看说明）" "控制是否打印请求响应信息：true false"
 fun_send_request() {
     local args="AccessKeyId=$var_access_key_id&Action=$2&Format=json&$3&Version=2015-01-09"
     local message="$1&$(fun_get_url_encryption "/")&$(fun_get_url_encryption "$args")"
@@ -606,8 +611,22 @@ fun_send_request() {
     local string_to_sign=$(get_signature "sha1" "$message" "$key")
     local signature=$(fun_get_url_encryption "$string_to_sign")
     local request_url="$var_aliyun_ddns_api_host/?$args&Signature=$signature"
-    echo " curl -s $request_url"
-    curl -s ${request_url}
+    local response=$(curl -s ${request_url})
+
+    fun_wirte_log "${message_info_tag}阿里云$2接口请求返回信息:${response}" false
+
+    local code=$(fun_parse_json "$response" "Code")
+    local message=$(fun_parse_json "$response" "Message")
+
+    if [[ "$code" = "" ]]; then
+        fun_wirte_log "${message_success_tag}阿里云$2接口请求处理成功,返回消息:${message}"
+     else
+        fun_wirte_log "${message_warning_tag}阿里云$2接口请求处理失败,返回代码:${code}消息:${message}"
+    fi
+    # 获取RecordId时需要过滤出id值 需要打印请求响应信息 
+    if [[ "$4" != "" || "$4" = true ]]; then
+        echo $response
+    fi
 }
 
 # 获取域名解析记录Id正则
@@ -618,7 +637,7 @@ function fun_get_record_id_regx() {
 # 查询域名解析记录值请求
 function fun_query_record_id_send() {
     local query_url="SignatureMethod=HMAC-SHA1&SignatureNonce=$(fun_get_uuid)&SignatureVersion=1.0&SubDomain=$var_second_level_domain.$var_first_level_domain&Timestamp=$var_now_timestamp"
-    fun_send_request "GET" "DescribeSubDomainRecords" ${query_url}
+    fun_send_request "GET" "DescribeSubDomainRecords" ${query_url} true
 }
 # 更新域名解析记录值请求 fun_update_record "record_id"
 function fun_update_record_send() {
@@ -637,7 +656,7 @@ function fun_update_record(){
             fun_wirte_log "${message_info_tag}获取到到record_id=$var_domian_record_id"
             fun_wirte_log "${message_info_tag}正在更新解析记录:[$var_second_level_domain.$var_first_level_domain]的ip为[$var_local_wan_ip]......"
             fun_update_record_send ${var_domian_record_id}
-            fun_wirte_log "\n${message_info_tag}已经更新record_id=${var_domian_record_id}的记录"
+            fun_wirte_log "${message_info_tag}已经更新record_id=${var_domian_record_id}的记录"
         fi
     fi
     if [[ "${var_domian_record_id}" = "" ]]; then
@@ -653,36 +672,39 @@ function fun_update_record(){
     fi
 }
 
-# 写日志到文件并显示 fun_wirte_log "日志内容"
+# 写日志到文件并显示 usage：fun_wirte_log "日志内容" “是否输出到console中：true（默认） false”
 function fun_wirte_log(){
     log_content="$1"
-    echo -e "$log_content"
+    if [[ "$2" = "" || "$2" = true ]]; then
+        echo -e "$log_content"
+    fi
     # 处理样式 todo
-    # log_content=perl -e "${log_content}" | sed 's/\x1b\[[0-9;]*[mGKH]//g'
-    echo "$log_content" >> ${LOG_FILE_PATH}
+    echo "${log_content}" >> ${LOG_FILE_PATH}
 }
 
 # 消息推送
 function fun_push_message(){
-    fun_send_message_to_ding_ding "$1"
+    fun_wirte_log "${message_info_tag}正在推送消息到钉钉......"
+    fun_send_message_to_ding_ding "{'msgtype': 'text','text':{'content': '【域名解析服务-${NOW_DATE}】$1'}}" 
 }
 #发送消息到钉钉 fun_send_message_to_ding_ding "内容"
 function fun_send_message_to_ding_ding(){
     if [[ "${var_enable_message_push}" = true ]]; then
-        local request_url="$var_push_message_api?access_token=$var_push_message_access_token"
-        curl -s "${request_url}" \
-        -H "Content-Type: application/json" \
-        -d "{
-         \"msgtype\": \"text\",
-         \"text\":
-                {
-                    \"content\": \"【域名解析服务】$1\"
-                }
-        }"
-        if [[ "$?" -eq "0" ]]; then
-            fun_wirte_log "\n${message_success_tag}消息推送成功,服务器ip变动消息已推送钉钉机器人."
+        local timestamp_ms=$(fun_get_current_timestamp_ms)
+        local str_to_sign="$timestamp_ms\n$var_push_message_secret"; 
+        local sign=$(get_signature "sha256" "$str_to_sign" "$var_push_message_secret")
+        local encode_sign=$(fun_get_url_encryption "$sign");
+        local request_url="$var_push_message_api?access_token=$var_push_message_access_token&timestamp=$timestamp_ms&sign=$encode_sign"
+        # 发送请求
+        local response=$(curl -s "${request_url}" -H "Content-Type: application/json" -d "$1")
+        fun_wirte_log "${message_info_tag}钉钉接口推送返回信息:${response}" false
+        # json解析
+        local errcode=$(fun_parse_json "$response" "errcode")
+        local errmsg=$(fun_parse_json "$response" "errmsg")
+        if [[ "$errcode" -eq "0" ]]; then
+            fun_wirte_log "${message_success_tag}消息推送成功,返回消息:${errmsg}"
         else
-           fun_wirte_log "${message_warning_tag}消息推送失败,请检查。"
+           fun_wirte_log "${message_warning_tag}消息推送失败,返回消息:${errmsg}"
         fi
     fi
 }
@@ -719,6 +741,7 @@ function main_fun_config_and_run(){
     fun_check_config_file
     fun_set_config
     fun_save_config
+    fun_check_online
     fun_get_local_wan_ip
     fun_get_domian_server_ip
     fun_get_now_timestamp
@@ -735,6 +758,7 @@ function main_fun_only_run(){
     fi
     fun_check_run_environment
     fun_install_run_environment
+    fun_check_online
     fun_get_local_wan_ip
     fun_get_domian_server_ip
     fun_get_now_timestamp
