@@ -58,11 +58,17 @@ UBUNTU_OS_RELEASE="ubuntu"
 DEBIAN_OS_RELEASE="debian"
 
 # 配置、日志文件存放目录
-FILE_SAVE_DIR="/aliyun-ddns"
+FILE_SAVE_DIR=""
+# 目录前缀
+FILE_DIR_PREFIX="aliyun-ddns"
 #配置文件路径
-CONFIG_FILE_PATH="/config.cfg"
+CONFIG_FILE_PATH=""
+# 配置文件名
+CONFIG_FILE_NAME="config.cfg"
 #日志储存目录
-LOG_FILE_PATH="/log-info.log"
+LOG_FILE_PATH=""
+# 日志文件名
+LOG_FILE_NAME="log-info.log"
 
 #当前时间戳
 var_now_timestamp=""
@@ -164,27 +170,31 @@ function fun_check_root(){
 function fun_setting_file_save_dir(){
     fun_wirte_log "${message_info_tag}正在设置配置、日志等文件保存目录....."
     fun_check_root
-    if [[ "${var_os_release}" =~ "${MAC_OS_RELEASE}" ]]; then
-        CONFIG_FILE_PATH=".${CONFIG_FILE_PATH}"
-        LOG_FILE_PATH=".${LOG_FILE_PATH}"
-        fun_wirte_log "${message_success_tag}当前系统内核为:${var_os_release},已设置配置文件路径:${CONFIG_FILE_PATH} 日志文件路径:${LOG_FILE_PATH}"
-    else
-        if [ "${var_is_root_execute}" = true ]; then
-            FILE_SAVE_DIR="/etc${FILE_SAVE_DIR}"
-            fun_wirte_log "${message_info_tag}当前系统内核为:${var_os_release},具有root权限，设置目录为:${FILE_SAVE_DIR}"
+    if [ "${FILE_SAVE_DIR}" = "" ]; then
+        if [[ "${var_os_release}" =~ "${MAC_OS_RELEASE}" ]]; then
+            FILE_SAVE_DIR="./${FILE_DIR_PREFIX}"
         else
-            FILE_SAVE_DIR="~${FILE_SAVE_DIR}"
-            fun_wirte_log "${message_info_tag}当前系统内核为:${var_os_release},无root权限，设置目录为:${FILE_SAVE_DIR}"
+            if [ "${var_is_root_execute}" = true ]; then
+                FILE_SAVE_DIR="/etc/${FILE_DIR_PREFIX}"
+            else
+                FILE_SAVE_DIR="~/${FILE_DIR_PREFIX}"
+            fi
         fi
-       if [ ! -d "$FILE_SAVE_DIR" ]; then
-           mkdir -p ${FILE_SAVE_DIR}
-           fun_wirte_log "${message_info_tag}创建文件保存目录成功，目录为:${FILE_SAVE_DIR}"
-       fi
-        CONFIG_FILE_PATH="${FILE_SAVE_DIR}${CONFIG_FILE_PATH}"
-        LOG_FILE_PATH="${FILE_SAVE_DIR}${LOG_FILE_PATH}"
-        fun_wirte_log "${message_success_tag}当前系统内核为:${var_os_release},已设置配置文件路径:${CONFIG_FILE_PATH} 日志文件路径:${LOG_FILE_PATH}"
     fi
     
+    if [ ! -d "$FILE_SAVE_DIR" ]; then
+        mkdir -p ${FILE_SAVE_DIR}
+        fun_wirte_log "${message_info_tag}创建文件保存目录成功，目录为:${FILE_SAVE_DIR}"
+    fi
+
+    if [ "${CONFIG_FILE_PATH}" = "" ]; then
+        CONFIG_FILE_PATH="${FILE_SAVE_DIR}/${CONFIG_FILE_NAME}" 
+    fi
+
+    if [ "${LOG_FILE_PATH}" = "" ]; then
+        LOG_FILE_PATH="${FILE_SAVE_DIR}/${LOG_FILE_NAME}" 
+    fi
+    fun_wirte_log "${message_success_tag}当前系统内核为:${var_os_release},已设置配置文件路径:${CONFIG_FILE_PATH} 日志文件路径:${LOG_FILE_PATH}"
 }
 
 # 检测运行环境
