@@ -57,10 +57,12 @@ CENT_OS_RELEASE="centos"
 UBUNTU_OS_RELEASE="ubuntu"
 DEBIAN_OS_RELEASE="debian"
 
+# 配置、日志文件存放目录
+FILE_SAVE_DIR="/aliyun-ddns"
 #配置文件路径
-CONFIG_FILE_PATH="$(pwd)/config"
+CONFIG_FILE_PATH="/config.cfg"
 #日志储存目录
-LOG_FILE_PATH="$(pwd)/log-info.log"
+LOG_FILE_PATH="/log-info.log"
 
 #当前时间戳
 var_now_timestamp=""
@@ -158,6 +160,33 @@ function fun_check_root(){
     fi
 }
 
+# 设置配置、日志文件保存目录
+function fun_setting_file_save_dir(){
+    fun_wirte_log "${message_info_tag}正在设置配置、日志等文件保存目录....."
+    fun_check_root
+    if [[ "${var_os_release}" =~ "${MAC_OS_RELEASE}" ]]; then
+        CONFIG_FILE_PATH=".${CONFIG_FILE_PATH}"
+        LOG_FILE_PATH=".${LOG_FILE_PATH}"
+        fun_wirte_log "${message_success_tag}当前系统内核为:${var_os_release},已设置配置文件路径:${CONFIG_FILE_PATH} 日志文件路径:${LOG_FILE_PATH}"
+    else
+        if [ "${var_is_root_execute}" = true ]; then
+            FILE_SAVE_DIR="/etc${FILE_SAVE_DIR}"
+            fun_wirte_log "${message_info_tag}当前系统内核为:${var_os_release},具有root权限，设置目录为:${FILE_SAVE_DIR}"
+        else
+            FILE_SAVE_DIR="~${FILE_SAVE_DIR}"
+            fun_wirte_log "${message_info_tag}当前系统内核为:${var_os_release},无root权限，设置目录为:${FILE_SAVE_DIR}"
+        fi
+       if [ ! -d "$FILE_SAVE_DIR" ]; then
+           mkdir -p ${FILE_SAVE_DIR}
+           fun_wirte_log "${message_info_tag}创建文件保存目录成功，目录为:${FILE_SAVE_DIR}"
+       fi
+        CONFIG_FILE_PATH="${FILE_SAVE_DIR}${CONFIG_FILE_PATH}"
+        LOG_FILE_PATH="${FILE_SAVE_DIR}${LOG_FILE_PATH}"
+        fun_wirte_log "${message_success_tag}当前系统内核为:${var_os_release},已设置配置文件路径:${CONFIG_FILE_PATH} 日志文件路径:${LOG_FILE_PATH}"
+    fi
+    
+}
+
 # 检测运行环境
 function fun_check_run_environment(){
     if [[ -f "/usr/bin/sudo" ]]; then
@@ -228,15 +257,15 @@ function fun_install_run_environment(){
         fun_wirte_log "${message_warning_tag}检测到缺少运行必需组件,正在尝试安装......"
         # 有root权限
         if [[ "${var_is_root_execute}" = true ]]; then
-            if [[ "${var_os_release}" = "${CENT_OS_RELEASE}" ]]; then
+            if [[ "${var_os_release}" =~ "${CENT_OS_RELEASE}" ]]; then
                 fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${CENT_OS_RELEASE}"
                 fun_wirte_log "${message_info_tag}正在安装必需组件......"
                 yum install curl openssl bind-utils -y
-                elif [[ "${var_os_release}" = "${UBUNTU_OS_RELEASE}" ]];then
+                elif [[ "${var_os_release}" =~ "${UBUNTU_OS_RELEASE}" ]];then
                 fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${UBUNTU_OS_RELEASE}"
                 fun_wirte_log "${message_info_tag}正在安装必需组件......"
                 apt-get install curl openssl bind-utils -y
-                elif [[ "${var_os_release}" = "${DEBIAN_OS_RELEASE}" ]]; then
+                elif [[ "${var_os_release}" =~ "${DEBIAN_OS_RELEASE}" ]]; then
                 fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${DEBIAN_OS_RELEASE}"
                 fun_wirte_log "${message_info_tag}正在安装必需组件......"
                 apt-get install curl openssl bind-utils -y
@@ -263,15 +292,15 @@ function fun_install_run_environment(){
             fi
         elif [[ -f "/usr/bin/sudo" ]]; then
             fun_wirte_log "${message_warning_tag}当前脚本未以root权限执行,正在尝试以sudo命令安装必需组件......"
-           if [[ "${var_os_release}" = "${CENT_OS_RELEASE}" ]]; then
+           if [[ "${var_os_release}" =~ "${CENT_OS_RELEASE}" ]]; then
                 fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${CENT_OS_RELEASE}"
                 fun_wirte_log "${message_info_tag}正在以sudo安装必需组件......"
                 sudo yum install curl openssl bind-utils -y
-                elif [[ "${var_os_release}" = "${UBUNTU_OS_RELEASE}" ]];then
+                elif [[ "${var_os_release}" =~ "${UBUNTU_OS_RELEASE}" ]];then
                 fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${UBUNTU_OS_RELEASE}"
                 fun_wirte_log "${message_info_tag}正在以sudo安装必需组件......"
                 sudo apt-get install curl openssl bind-utils -y
-                elif ["${var_os_release}" = "${DEBIAN_OS_RELEASE}" ]; then
+                elif ["${var_os_release}" =~ "${DEBIAN_OS_RELEASE}" ]; then
                 fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${DEBIAN_OS_RELEASE}"
                 fun_wirte_log "${message_info_tag}正在以sudo安装必需组件......"
                 sudo apt-get install curl openssl bind-utils -y
@@ -286,6 +315,7 @@ function fun_install_run_environment(){
 
 # 检测配置文件
 function fun_check_config_file(){
+    fun_setting_file_save_dir
     if [[ -f "${CONFIG_FILE_PATH}" ]]; then
        fun_wirte_log "${message_info_tag}检测到配置文件,自动加载现有配置信息。可通过菜单选项【恢复出厂设置】重置."
         #加载配置文件
@@ -451,6 +481,7 @@ function fun_set_config(){
 function fun_save_config(){
     # 写入配置文件
     fun_wirte_log "${message_info_tag}正在保存配置文件......"
+    fun_setting_file_save_dir
     rm -f ${CONFIG_FILE_PATH}
     cat>${CONFIG_FILE_PATH}<<EOF
     var_first_level_domain="${var_first_level_domain}"
@@ -709,6 +740,7 @@ function fun_send_message_to_ding_ding(){
 
 # 恢复出厂设置
 function fun_restore_settings(){
+    fun_setting_file_save_dir
     rm -f ${CONFIG_FILE_PATH}
     var_is_root_execute=false
     var_is_support_sudo=false
@@ -727,6 +759,7 @@ function fun_restore_settings(){
 
 # 清除日志文件
 function fun_clearn_logs(){
+    fun_setting_file_save_dir
     rm -f ${LOG_FILE_PATH}
     echo -e "${message_success_tag}日志文件清理成功!"
 }

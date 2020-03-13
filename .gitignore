@@ -1,3 +1,4 @@
 src/aliyun/config
 .DS_Store
 src/aliyun/log-info.log
+src/aliyun/config.cfg
