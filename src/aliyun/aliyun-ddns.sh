@@ -8,7 +8,7 @@ build_version="v1.0.0"
 NOW_DATE=$(date "+%Y-%m-%d %H:%M:%S")
 
 #当前时间
-echo "=========== $(date) ==========="
+fun_wirte_log "=========== $(date) ==========="
 
 #定义字体颜色
 color_black_start="\033[30m"
@@ -30,7 +30,7 @@ message_fail_tag="${color_red_start}[Failed]  ${NOW_DATE} ${color_end}"
 
 #功能、版本信息描述输出
 function fun_show_version_info(){
-echo -e "${color_green_start}
+fun_wirte_log "${color_green_start}
 #############################################################
 # Aliyun Domain DNS Update Shell Script
 #
@@ -58,9 +58,9 @@ UBUNTU_OS_RELEASE="ubuntu"
 DEBIAN_OS_RELEASE="debian"
 
 #配置文件路径
-CONFIG_FILE_PATH="./config"
+CONFIG_FILE_PATH="$(pwd)/config"
 #日志储存目录
-LOG_FILE_PATH="./log-info.log"
+LOG_FILE_PATH="$(pwd)/log-info.log"
 
 #当前时间戳
 var_now_timestamp=""
@@ -157,6 +157,7 @@ function fun_check_root(){
         var_is_root_execute=true
     fi
 }
+
 # 检测运行环境
 function fun_check_run_environment(){
     if [[ -f "/usr/bin/sudo" ]]; then
@@ -450,9 +451,6 @@ function fun_set_config(){
 function fun_save_config(){
     # 写入配置文件
     fun_wirte_log "${message_info_tag}正在保存配置文件......"
-    if [[ "${CONFIG_FILE_PATH}" = "" ]]; then
-        CONFIG_FILE_PATH="./config"
-    fi
     rm -f ${CONFIG_FILE_PATH}
     cat>${CONFIG_FILE_PATH}<<EOF
     var_first_level_domain="${var_first_level_domain}"
