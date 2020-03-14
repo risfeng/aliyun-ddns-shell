@@ -19,7 +19,7 @@
     - 给aliyun-ddns.sh脚本赋可执行权：`chmod +x aliyun-ddns-shell/src/aliyun/aliyun-ddns.sh`
     - 运行脚本，根据提示进行配置（第一次运行需要配置）
     - 如需要使用钉钉自定义机器人推送成功失败消息，请新建自定义钉钉机器人，配置access_token和消息加签密钥
-    - 脚本支持2中运行方式：
+    - 脚本支持2种运行方式：
         - 直接运行脚本根据提示选择需要使用的功能
         ```
         > aliyun-ddns.sh (mac: > bash aliyun-ddns.sh)
