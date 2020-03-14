@@ -8,7 +8,7 @@ build_version="v1.0.0"
 NOW_DATE=$(date "+%Y-%m-%d %H:%M:%S")
 
 #当前时间
-fun_wirte_log "=========== $(date) ==========="
+echo "=========== $(date) ==========="
 
 #定义字体颜色
 color_black_start="\033[30m"
@@ -30,7 +30,7 @@ message_fail_tag="${color_red_start}[Failed]  ${NOW_DATE} ${color_end}"
 
 #功能、版本信息描述输出
 function fun_show_version_info(){
-fun_wirte_log "${color_green_start}
+echo -e "${color_green_start}
 #############################################################
 # Aliyun Domain DNS Update Shell Script
 #
@@ -38,7 +38,7 @@ fun_wirte_log "${color_green_start}
 #
 # Version: ${build_version}
 # BuildDate: ${build_date}
-# Author: risfeng<risfeng@gamil.com>
+# Author: risfeng<risfeng@gmail.com>
 # GitHub: https://github.com/risfeng/aliyun-ddns-shell
 #
 # Usage: please refer to https://github.com/risfeng/aliyun-ddns-shell/blob/master/README.md
@@ -90,9 +90,9 @@ var_is_online=false
 #是否存在配置文件
 var_is_exist_config_file=false
 #检测外网是否通地址 默认:www.baidu.com
-var_check_online_url="www.baidu.com"
+var_check_online_url=""
 #检测外网是否通重试次数 默认:3
-var_check_online_retry_times=3
+var_check_online_retry_times=""
 
 #阿里云Dns动态更新配置变量定义
 
@@ -168,7 +168,6 @@ function fun_check_root(){
 
 # 设置配置、日志文件保存目录
 function fun_setting_file_save_dir(){
-    fun_wirte_log "${message_info_tag}正在设置配置、日志等文件保存目录....."
     fun_check_root
     if [ "${FILE_SAVE_DIR}" = "" ]; then
         if [[ "${var_os_release}" =~ "${MAC_OS_RELEASE}" ]]; then
@@ -184,7 +183,6 @@ function fun_setting_file_save_dir(){
     
     if [ ! -d "$FILE_SAVE_DIR" ]; then
         mkdir -p ${FILE_SAVE_DIR}
-        fun_wirte_log "${message_info_tag}创建文件保存目录成功，目录为:${FILE_SAVE_DIR}"
     fi
 
     if [ "${CONFIG_FILE_PATH}" = "" ]; then
@@ -194,7 +192,6 @@ function fun_setting_file_save_dir(){
     if [ "${LOG_FILE_PATH}" = "" ]; then
         LOG_FILE_PATH="${FILE_SAVE_DIR}/${LOG_FILE_NAME}" 
     fi
-    fun_wirte_log "${message_success_tag}当前系统内核为:${var_os_release},已设置配置文件路径:${CONFIG_FILE_PATH} 日志文件路径:${LOG_FILE_PATH}"
 }
 
 # 检测运行环境
@@ -218,6 +215,13 @@ function fun_check_run_environment(){
         var_is_installed_nslookup=true
     else
         var_is_installed_nslookup=false
+    fi
+    if [ -f "/etc/redhat-release" ]; then
+        var_os_release="centos"
+    elif [ -f "/etc/lsb-release" ]; then
+        var_os_release="ubuntu"
+    elif [ -f "/etc/debian_version" ]; then
+        var_os_release="debian"
     fi
 }
 
@@ -267,15 +271,15 @@ function fun_install_run_environment(){
         fun_wirte_log "${message_warning_tag}检测到缺少运行必需组件,正在尝试安装......"
         # 有root权限
         if [[ "${var_is_root_execute}" = true ]]; then
-            if [[ "${var_os_release}" =~ "${CENT_OS_RELEASE}" ]]; then
+            if [[ "${var_os_release}" = "${CENT_OS_RELEASE}" ]]; then
                 fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${CENT_OS_RELEASE}"
                 fun_wirte_log "${message_info_tag}正在安装必需组件......"
                 yum install curl openssl bind-utils -y
-                elif [[ "${var_os_release}" =~ "${UBUNTU_OS_RELEASE}" ]];then
+                elif [[ "${var_os_release}" = "${UBUNTU_OS_RELEASE}" ]];then
                 fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${UBUNTU_OS_RELEASE}"
                 fun_wirte_log "${message_info_tag}正在安装必需组件......"
                 apt-get install curl openssl bind-utils -y
-                elif [[ "${var_os_release}" =~ "${DEBIAN_OS_RELEASE}" ]]; then
+                elif [[ "${var_os_release}" = "${DEBIAN_OS_RELEASE}" ]]; then
                 fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${DEBIAN_OS_RELEASE}"
                 fun_wirte_log "${message_info_tag}正在安装必需组件......"
                 apt-get install curl openssl bind-utils -y
@@ -302,15 +306,15 @@ function fun_install_run_environment(){
             fi
         elif [[ -f "/usr/bin/sudo" ]]; then
             fun_wirte_log "${message_warning_tag}当前脚本未以root权限执行,正在尝试以sudo命令安装必需组件......"
-           if [[ "${var_os_release}" =~ "${CENT_OS_RELEASE}" ]]; then
+           if [[ "${var_os_release}" = "${CENT_OS_RELEASE}" ]]; then
                 fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${CENT_OS_RELEASE}"
                 fun_wirte_log "${message_info_tag}正在以sudo安装必需组件......"
                 sudo yum install curl openssl bind-utils -y
-                elif [[ "${var_os_release}" =~ "${UBUNTU_OS_RELEASE}" ]];then
+                elif [[ "${var_os_release}" = "${UBUNTU_OS_RELEASE}" ]];then
                 fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${UBUNTU_OS_RELEASE}"
                 fun_wirte_log "${message_info_tag}正在以sudo安装必需组件......"
                 sudo apt-get install curl openssl bind-utils -y
-                elif ["${var_os_release}" =~ "${DEBIAN_OS_RELEASE}" ]; then
+                elif ["${var_os_release}" = "${DEBIAN_OS_RELEASE}" ]; then
                 fun_wirte_log "${message_info_tag}检测到当前系统发行版本为:${DEBIAN_OS_RELEASE}"
                 fun_wirte_log "${message_info_tag}正在以sudo安装必需组件......"
                 sudo apt-get install curl openssl bind-utils -y
@@ -334,7 +338,9 @@ function fun_check_config_file(){
         || [[ "${var_access_key_id}" = "" ]] || [[ "${var_access_key_secret}" = "" ]] || [[ "${var_local_wan_ip}" = "" ]] \
         || [[ "${var_domian_server_ip}" = "" ]] || [[ "${var_check_online_url}" = "" ]] || [[ "${var_check_online_retry_times}" = "" ]] \
         || [[ "${var_aliyun_ddns_api_host}" = "" ]] \
-        || [[ "${var_enable_message_push}" = true && "${var_push_message_access_token}" = "" && "${var_push_message_secret}" = "" ]] ; then
+        || [[ "${var_enable_message_push}" = true && "${var_push_message_access_token}" = "" && "${var_push_message_secret}" = "" ]] \
+        || [[ "${var_check_online_url}" = "" ]] \
+        || [[ "${var_check_online_retry_times}" = "" ]] ; then
             fun_wirte_log "${message_error_tag}配置文件有误,请检查配置文件,建议清理后重新配置!程序退出执行."
             exit 1
         fi
@@ -346,38 +352,52 @@ function fun_check_config_file(){
 
 # 设置配置文件
 function fun_set_config(){
+    # 检测外网畅通ping等域名地址,默认:www.baidu.com
+    if [[ "${var_check_online_url}" = "" ]]; then 
+        echo -e "\n${message_info_tag}[var_check_online_url]请输入外网检测Ping地址:"
+        read -p "(默认:www.baidu.com,如有疑问请输入“-h”查看帮助):" var_check_online_url
+        [[ "${var_check_online_url}" = "-h" ]] && fun_help_document "var_check_online_url" && echo -e "${message_info_tag}[var_check_online_url]请输入外网检测Ping地址:" && read -p "(默认:www.baidu.com):" var_check_online_url
+        [[ -z "${var_check_online_url}" ]] && echo -e "${message_info_tag}输入为空值,已设置为:“www.baidu.com”" && var_check_online_url="www.baidu.com"
+    fi
+     # 检测外网畅通失败重试次数,默认:3  
+    if [[ "${var_check_online_retry_times}" = "" ]]; then 
+        echo -e "\n${message_info_tag}[var_check_online_retry_times]请输入外网检测失败后重试次数:"
+        read -p "(默认:3,如有疑问请输入“-h”查看帮助):" var_check_online_retry_times
+        [[ "${var_check_online_retry_times}" = "-h" ]] && fun_help_document "var_check_online_retry_times" && echo -e "${message_info_tag}[var_check_online_retry_times]请输入外网检测失败后重试次数:" && read -p "(默认:3):" var_check_online_retry_times
+        [[ -z "${var_check_online_retry_times}" ]] && echo -e "${message_info_tag}输入为空值,已设置为:“3”" && var_check_online_retry_times=3
+    fi
     # 一级域名
     if [[ "${var_first_level_domain}" = "" ]]; then
-        echo -e "\n${message_info_tag}[var_first_level_domain]请输入一级域名(示例 adotcode.com)"
+        echo -e "\n${message_info_tag}[var_first_level_domain]请输入一级域名(示例 demo.com)${color_red_start}(*)${color_end}"
         read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_first_level_domain
-        [[ "${var_first_level_domain}" = "-h" ]] && fun_help_document "var_first_level_domain" && echo -e "${message_info_tag}[var_first_level_domain]请输入一级域名 (示例 adotcode.com)" && read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_first_level_domain
+        [[ "${var_first_level_domain}" = "-h" ]] && fun_help_document "var_first_level_domain" && echo -e "${message_info_tag}[var_first_level_domain]请输入一级域名 (示例 demo.com)" && read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_first_level_domain
         while [[ "${var_first_level_domain}" = "" || "${var_first_level_domain}" = "-h" ]]
         do
             if [[ "${var_first_level_domain}" = "" ]]; then
                 echo -e "${message_error_tag}此项不可为空,请重新输入!"
-                echo -e "${message_info_tag}[var_first_level_domain]请输入一级域名(示例 adotcode.com)"
+                echo -e "${message_info_tag}[var_first_level_domain]请输入一级域名(示例 demo.com)${color_red_start}(*)${color_end}"
                 read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_first_level_domain
                 elif [[ "${var_first_level_domain}" = "-h"  ]]; then
                 fun_help_document "var_first_level_domain"
-                echo -e "${message_info_tag}[var_first_level_domain]请输入一级域名 (示例 adotcode.com)"
+                echo -e "${message_info_tag}[var_first_level_domain]请输入一级域名(示例 demo.com)${color_red_start}(*)${color_end}"
                 read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_first_level_domain
             fi
         done
     fi
     # 二级域名
     if [[ "${var_second_level_domain}" = "" ]]; then
-        echo -e "\n${message_info_tag}[var_second_level_domain]请输入二级域名(示例 test)"
+        echo -e "\n${message_info_tag}[var_second_level_domain]请输入二级域名(示例 test)${color_red_start}(*)${color_end}"
         read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_second_level_domain
         [[ "${var_second_level_domain}" = "-h" ]] && fun_help_document "var_second_level_domain" && echo -e "${message_info_tag}[var_second_level_domain]请输入二级域名 (示例 test)" && read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_second_level_domain
         while [[ "${var_second_level_domain}" = "" || "${var_second_level_domain}" = "-h" ]]
         do
             if [[ "${var_second_level_domain}" = "" ]]; then
                 echo -e "${message_error_tag}此项不可为空,请重新输入!"
-                echo -e "${message_info_tag}[var_second_level_domain]请输入二级域名(示例 test)"
+                echo -e "${message_info_tag}[var_second_level_domain]请输入二级域名(示例 test)${color_red_start}(*)${color_end}"
                 read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_second_level_domain
                 elif [[ "${var_second_level_domain}" = "-h"  ]]; then
                 fun_help_document "var_second_level_domain"
-                echo -e "${message_info_tag}[var_second_level_domain]请输入二级域名 (示例 test)"
+                echo -e "${message_info_tag}[var_second_level_domain]请输入二级域名(示例 test)${color_red_start}(*)${color_end}"
                 read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_second_level_domain
             fi
         done
@@ -391,36 +411,36 @@ function fun_set_config(){
     fi
     # 阿里云授权Key
     if [[ "${var_access_key_id}" = "" ]]; then
-        echo -e "\n${message_info_tag}[var_access_key_id]请输入阿里云AccessKeyId"
-        read -p "(此项必须填写,如有疑问请输入“-h”查看帮助):" var_access_key_id
-        [[ "${var_access_key_id}" = "-h" ]] && fun_help_document "var_access_key_id" && echo -e "${message_info_tag}[var_access_key_id]请输入阿里云AccessKeyId" && read -p "(此项必须填写,如有疑问请输入“-h”查看帮助):" var_access_key_id
+        echo -e "\n${message_info_tag}[var_access_key_id]请输入阿里云AccessKeyId${color_red_start}(*)${color_end}"
+        read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_access_key_id
+        [[ "${var_access_key_id}" = "-h" ]] && fun_help_document "var_access_key_id" && echo -e "${message_info_tag}[var_access_key_id]请输入阿里云AccessKeyId" && read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_access_key_id
         while [[ "${var_access_key_id}" = "" || "${var_access_key_id}" = "-h" ]]
         do
             if [[ "${var_access_key_id}" = "" ]]; then
                 echo -e "${message_error_tag}此项不可为空,请重新输入!"
-                echo -e "${message_info_tag}[var_access_key_id]请输入阿里云AccessKeyId"
+                echo -e "${message_info_tag}[var_access_key_id]请输入阿里云AccessKeyId${color_red_start}(*)${color_end}"
                 read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_access_key_id
                 elif [[ "${var_access_key_id}" = "-h"  ]]; then
                 fun_help_document "var_access_key_id"
-                echo -e "${message_info_tag}[var_access_key_id]请输入阿里云AccessKeyId"
+                echo -e "${message_info_tag}[var_access_key_id]请输入阿里云AccessKeyId${color_red_start}(*)${color_end}"
                 read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_access_key_id
             fi
         done
     fi
     # 阿里云授权Key Secret
     if [[ "${var_access_key_secret}" = "" ]]; then
-        echo -e "\n${message_info_tag}[var_access_key_secret]请输入阿里云AccessKeySecret"
-        read -p "(此项必须填写,如有疑问请输入“-h”查看帮助):" var_access_key_secret
-        [[ "${var_access_key_secret}" = "-h" ]] && fun_help_document "var_access_key_secret" && echo -e "${message_info_tag}[var_access_key_secret]请输入阿里云AccessKeySecret" && read -p "(此项必须填写,如有疑问请输入“-h”查看帮助):" var_access_key_secret
+        echo -e "\n${message_info_tag}[var_access_key_secret]请输入阿里云AccessKeySecret${color_red_start}(*)${color_end}"
+        read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_access_key_secret
+        [[ "${var_access_key_secret}" = "-h" ]] && fun_help_document "var_access_key_secret" && echo -e "${message_info_tag}[var_access_key_secret]请输入阿里云AccessKeySecret" && read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_access_key_secret
         while [[ "${var_access_key_secret}" = "" || "${var_access_key_secret}" = "-h" ]]
         do
             if [[ "${var_access_key_secret}" = "" ]]; then
                 echo -e "${message_error_tag}此项不可为空,请重新输入!"
-                echo -e "${message_info_tag}[var_access_key_secret]请输入阿里云AccessKeySecret"
+                echo -e "${message_info_tag}[var_access_key_secret]请输入阿里云AccessKeySecret${color_red_start}(*)${color_end}"
                 read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_access_key_secret
                 elif [[ "${var_access_key_secret}" = "-h"  ]]; then
                 fun_help_document "var_access_key_secret"
-                echo -e "${message_info_tag}[var_first_level_domain]请输入一级域名 (示例 adotcode.com)"
+                echo -e "${message_info_tag}[var_access_key_secret]请输入阿里云AccessKeySecret${color_red_start}(*)${color_end}"
                 read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_access_key_secret
             fi
         done
@@ -450,18 +470,18 @@ function fun_set_config(){
 
     # 消息通知发送token
     if [[ "${var_enable_message_push}" = true && "${var_push_message_access_token}" = "" ]]; then
-        echo -e "\n${message_info_tag}[var_push_message_access_token]请输入钉钉机器人推送access_token"
-        read -p "(此项必须填写,如有疑问请输入“-h”查看帮助):" var_push_message_access_token
-        [[ "${var_push_message_access_token}" = "-h" ]] && fun_help_document "var_push_message_access_token" && echo -e "${message_info_tag}[var_push_message_access_token]请输入钉钉机器人推送access_token" && read -p "(此项必须填写,如有疑问请输入“-h”查看帮助):" var_push_message_access_token
+        echo -e "\n${message_info_tag}[var_push_message_access_token]请输入钉钉机器人推送access_token${color_red_start}(*)${color_end}"
+        read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_push_message_access_token
+        [[ "${var_push_message_access_token}" = "-h" ]] && fun_help_document "var_push_message_access_token" && echo -e "${message_info_tag}[var_push_message_access_token]请输入钉钉机器人推送access_token" && read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_push_message_access_token
         while [[ "${var_push_message_access_token}" = "" || "${var_push_message_access_token}" = "-h" ]]
         do
             if [[ "${var_push_message_access_token}" = "" ]]; then
                 echo -e "${message_error_tag}此项不可为空,请重新输入!"
-                echo -e "${message_info_tag}[var_push_message_access_token]请输入钉钉机器人推送access_token"
+                echo -e "${message_info_tag}[var_push_message_access_token]请输入钉钉机器人推送access_token${color_red_start}(*)${color_end}"
                 read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_push_message_access_token
                 elif [[ "${var_push_message_access_token}" = "-h"  ]]; then
                 fun_help_document "var_push_message_access_token"
-                echo -e "${message_info_tag}[var_push_message_access_token]请输入钉钉机器人推送access_token"
+                echo -e "${message_info_tag}[var_push_message_access_token]请输入钉钉机器人推送access_token${color_red_start}(*)${color_end}"
                 read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_push_message_access_token
             fi
         done
@@ -469,18 +489,18 @@ function fun_set_config(){
 
     # 消息通知发送secret
     if [[ "${var_enable_message_push}" = true && "${var_push_message_secret}" = "" ]]; then
-        echo -e "\n${message_info_tag}[var_push_message_secret]请输入钉钉机器人安全设置的加签(密钥)"
-        read -p "(此项必须填写,如有疑问请输入“-h”查看帮助):" var_push_message_secret
-        [[ "${var_push_message_secret}" = "-h" ]] && fun_help_document "var_push_message_secret" && echo -e "${message_info_tag}[var_push_message_secret]请输入钉钉机器人安全设置的加签(密钥)" && read -p "(此项必须填写,如有疑问请输入“-h”查看帮助):" var_push_message_secret
+        echo -e "\n${message_info_tag}[var_push_message_secret]请输入钉钉机器人安全设置的加签(密钥)${color_red_start}(*)${color_end}"
+        read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_push_message_secret
+        [[ "${var_push_message_secret}" = "-h" ]] && fun_help_document "var_push_message_secret" && echo -e "${message_info_tag}[var_push_message_secret]请输入钉钉机器人安全设置的加签(密钥)" && read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_push_message_secret
         while [[ "${var_push_message_secret}" = "" || "${var_push_message_secret}" = "-h" ]]
         do
             if [[ "${var_push_message_secret}" = "" ]]; then
                 echo -e "${message_error_tag}此项不可为空,请重新输入!"
-                echo -e "${message_info_tag}[var_push_message_secret]请输入钉钉机器人安全设置的加签(密钥)"
+                echo -e "${message_info_tag}[var_push_message_secret]请输入钉钉机器人安全设置的加签(密钥)${color_red_start}(*)${color_end}"
                 read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_push_message_secret
                 elif [[ "${var_push_message_secret}" = "-h"  ]]; then
                 fun_help_document "var_push_message_secret"
-                echo -e "${message_info_tag}[var_push_message_secret]请输入钉钉机器人安全设置的加签(密钥)"
+                echo -e "${message_info_tag}[var_push_message_secret]请输入钉钉机器人安全设置的加签(密钥)${color_red_start}(*)${color_end}"
                 read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_push_message_secret
             fi
         done
@@ -494,6 +514,8 @@ function fun_save_config(){
     fun_setting_file_save_dir
     rm -f ${CONFIG_FILE_PATH}
     cat>${CONFIG_FILE_PATH}<<EOF
+    var_check_online_url="${var_check_online_url}"
+    var_check_online_retry_times=${var_check_online_retry_times}
     var_first_level_domain="${var_first_level_domain}"
     var_second_level_domain="${var_second_level_domain}"
     var_domian_ttl="${var_domian_ttl}"
@@ -521,13 +543,13 @@ function fun_help_document(){
             此参数决定你要修改的DDNS域名中,一级域名的名称。
             请确保你要配置域名到DNS服务器已转入阿里云解析,也就是状态
             必须为“正常”或者“未设置解析”,不可以为“DNS服务器错误”等错误提示。
-            例如:adotcode.com\n"
+            例如:demo.com\n"
             var_first_level_domain=""
         ;;
         "var_second_level_domain")
             echo -e "${message_info_tag}${color_green_start}[${help_type}]二级域名帮助-说明${color_end}
             此参数决定你要修改的DDNS域名中,二级域名的名称。
-            二级域名与一级域名最终拼接成:test.adotcode.com
+            二级域名与一级域名最终拼接成:test.demo.com
             例如:test\n"
             var_second_level_domain=""
         ;;
@@ -592,6 +614,18 @@ function fun_help_document(){
             更多信息与配置请看https://ding-doc.dingtalk.com/doc#/serverapi2/qf2nxq官方文档。"
             var_push_message_secret=""
         ;;
+        "var_check_online_url")
+            echo -e "${message_info_tag}${color_green_start}[${help_type}]外网检测Ping地址-说明${color_end}
+            此参数为检测当前脚本运行环境与外网是否畅通ping使用的地址
+            如不了解，请使用默认值：www.baidu.com"
+            var_check_online_url=""
+        ;;
+         "var_check_online_retry_times")
+            echo -e "${message_info_tag}${color_green_start}[${help_type}]外网检测失败后重试次数-说明${color_end}
+            此参数为检测当前脚本运行环境与外网是否畅通ping失败后重试次数
+            如不了解，请使用默认值：3"
+            var_check_online_retry_times=""
+        ;;
         *)
             echo "无帮助文档"
     esac
@@ -600,7 +634,6 @@ function fun_help_document(){
 
 # 获取当前时间戳
 function fun_get_now_timestamp(){
-    fun_wirte_log "${message_info_tag}正在生成时间戳......"
     var_now_timestamp=`date -u "+%Y-%m-%dT%H%%3A%M%%3A%SZ"`
 }
 
@@ -713,6 +746,7 @@ function fun_update_record(){
 
 # 写日志到文件并显示 usage：fun_wirte_log "日志内容" “是否输出到console中：true（默认） false”
 function fun_wirte_log(){
+    fun_setting_file_save_dir
     log_content="$1"
     if [[ "$2" = "" || "$2" = true ]]; then
         echo -e "$log_content"

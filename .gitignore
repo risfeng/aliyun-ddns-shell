@@ -1,4 +1,3 @@
-src/aliyun/config
+src/aliyun/aliyun-ddns/config.cfg
+src/aliyun/aliyun-ddns/log-info.log
 .DS_Store
-src/aliyun/log-info.log
-src/aliyun/config.cfg
