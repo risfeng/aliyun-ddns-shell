@@ -68,5 +68,7 @@
         - 重新加载配置：`service crond reload`
         - 注意观察任务是否成功执行，如有疑问请自行百度
 ## 效果图
-
+![启动页面](https://raw.githubusercontent.com/risfeng/aliyun-ddns-shell/master/src/aliyun/screenshot/ss1.jpg)
+![配置页面](https://raw.githubusercontent.com/risfeng/aliyun-ddns-shell/master/src/aliyun/screenshot/ss2.jpg)
+![运行页面](https://raw.githubusercontent.com/risfeng/aliyun-ddns-shell/master/src/aliyun/screenshot/ss3.jpg)
 ## 欢迎star给予支持
