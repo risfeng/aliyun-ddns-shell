@@ -100,6 +100,8 @@ var_check_online_retry_times=""
 var_first_level_domain=""
 #二级域名 例如:testddns
 var_second_level_domain=""
+# 域名解析类型：A、NS、MX、TXT、CNAME、SRV、AAAA、CAA、REDIRECT_URL、FORWARD_URL
+var_domain_record_type=""
 #域名生效时间,默认:600 单位:秒
 var_domian_ttl=""
 #阿里云授权Key
@@ -340,6 +342,7 @@ function fun_check_config_file(){
         || [[ "${var_aliyun_ddns_api_host}" = "" ]] \
         || [[ "${var_enable_message_push}" = true && "${var_push_message_access_token}" = "" && "${var_push_message_secret}" = "" ]] \
         || [[ "${var_check_online_url}" = "" ]] \
+        || [[ "${var_domain_record_type}" = "" ]] \
         || [[ "${var_check_online_retry_times}" = "" ]] ; then
             fun_wirte_log "${message_error_tag}配置文件有误,请检查配置文件,建议清理后重新配置!程序退出执行."
             exit 1
@@ -402,6 +405,24 @@ function fun_set_config(){
             fi
         done
     fi
+    # 域名解析类型：A、NS、MX、TXT、CNAME、SRV、AAAA、CAA、REDIRECT_URL、FORWARD_URL
+    if [[ "${var_domain_record_type}" = "" ]]; then
+        echo -e "\n${message_info_tag}[var_domain_record_type]请输入解析类型(示例 A)${color_red_start}(*)${color_end}"
+        read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_domain_record_type
+        [[ "${var_domain_record_type}" = "-h" ]] && fun_help_document "var_domain_record_type" && echo -e "${message_info_tag}[var_domain_record_type]请输入解析类型(示例 A)" && read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_domain_record_type
+        while [[ "${var_domain_record_type}" = "" || "${var_domain_record_type}" = "-h" ]]
+        do
+            if [[ "${var_domain_record_type}" = "" ]]; then
+                echo -e "${message_error_tag}此项不可为空,请重新输入!"
+                echo -e "${message_info_tag}[var_domain_record_type]请输入解析类型(示例 A)${color_red_start}(*)${color_end}"
+                read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_domain_record_type
+                elif [[ "${var_domain_record_type}" = "-h"  ]]; then
+                fun_help_document "var_domain_record_type"
+                echo -e "${message_info_tag}[var_domain_record_type]请输入解析类型(示例 A)${color_red_start}(*)${color_end}"
+                read -p "(此项为必填,如有疑问请输入“-h”查看帮助):" var_domain_record_type
+            fi
+        done
+    fi
     # 域名生效时间,默认:600
     if [[ "${var_domian_ttl}" = "" ]]; then
         echo -e "\n${message_info_tag}[var_domian_ttl]请输入域名解析记录生效时间(TTL Time-To-Live)秒:"
@@ -447,9 +468,9 @@ function fun_set_config(){
     fi
     # 获取本机外网IP的shell命令
     if [[ "${var_local_wan_ip}" = "" ]]; then
-        echo -e "\n${message_info_tag}[var_local_wan_ip]请输入获取本机外网IP使用的命令(建议默认)"
+        echo -e "\n${message_info_tag}[var_local_wan_ip]请输入获取本机外网IP使用的命令(默认：只支持ipv4)"
         read -p "(如有疑问请输入“-h”查看帮助):" var_local_wan_ip
-        [[ "${var_local_wan_ip}" = "-h" ]] && fun_help_document "var_local_wan_ip" && echo -e "${message_info_tag}[var_local_wan_ip]请输入获取本机外网IP使用的命令(建议默认)" && read -p "(如有疑问请输入“-h”查看帮助):" var_local_wan_ip
+        [[ "${var_local_wan_ip}" = "-h" ]] && fun_help_document "var_local_wan_ip" && echo -e "${message_info_tag}[var_local_wan_ip]请输入获取本机外网IP使用的命令(默认：只支持ipv4)" && read -p "(如有疑问请输入“-h”查看帮助):" var_local_wan_ip
         [[ -z "${var_local_wan_ip}" ]] && echo -e "${message_info_tag}输入为空值,已设置执行命令为:“curl -s http://members.3322.org/dyndns/getip”" && var_local_wan_ip="curl -s http://members.3322.org/dyndns/getip"
     fi
     # 获取ddns域名当前的解析记录的shell命令
@@ -518,6 +539,7 @@ function fun_save_config(){
     var_check_online_retry_times=${var_check_online_retry_times}
     var_first_level_domain="${var_first_level_domain}"
     var_second_level_domain="${var_second_level_domain}"
+    var_domain_record_type="${var_domain_record_type}"
     var_domian_ttl="${var_domian_ttl}"
     var_access_key_id="${var_access_key_id}"
     var_access_key_secret="${var_access_key_secret}"
@@ -552,6 +574,15 @@ function fun_help_document(){
             二级域名与一级域名最终拼接成:test.demo.com
             例如:test\n"
             var_second_level_domain=""
+        ;;
+        # 域名解析类型：A、NS、MX、TXT、CNAME、SRV、AAAA、CAA、REDIRECT_URL、FORWARD_URL
+        "var_domain_record_type")
+            echo -e "${message_info_tag}${color_green_start}[${help_type}]域名解析类型帮助-说明${color_end}
+            此参数决定你解析域名的类型。
+            可选值：A、NS、MX、TXT、CNAME、SRV、AAAA、CAA、REDIRECT_URL、FORWARD_URL
+            每个值具体含义请移步：https://help.aliyun.com/document_detail/29805.html?spm=a2c4g.11186623.2.13.1e201cebcClxSe
+            例如:A\n"
+            var_domain_record_type=""
         ;;
         "var_domian_ttl")
             echo -e "${message_info_tag}${color_green_start}[${help_type}]域名生效时间TTL-说明${color_end}
@@ -685,7 +716,7 @@ fun_send_request() {
     local request_url="$var_aliyun_ddns_api_host/?$args&Signature=$signature"
     local response=$(curl -s ${request_url})
 
-    fun_wirte_log "${message_info_tag}阿里云$2接口请求返回信息:${response}" false
+    fun_wirte_log "${message_info_tag}阿里云$2接口请求返回信息:${response},接口:${request_url}" false
 
     local code=$(fun_parse_json "$response" "Code")
     local message=$(fun_parse_json "$response" "Message")
@@ -713,7 +744,7 @@ function fun_query_record_id_send() {
 }
 # 更新域名解析记录值请求 fun_update_record "record_id"
 function fun_update_record_send() {
-    fun_send_request "GET" "UpdateDomainRecord" "RR=$var_second_level_domain&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$(fun_get_uuid)&SignatureVersion=1.0&TTL=$var_domian_ttl&Timestamp=$var_now_timestamp&Type=A&Value=$var_local_wan_ip"
+    fun_send_request "GET" "UpdateDomainRecord" "RR=$var_second_level_domain&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$(fun_get_uuid)&SignatureVersion=1.0&TTL=$var_domian_ttl&Timestamp=$var_now_timestamp&Type=$var_domain_record_type&Value=$var_local_wan_ip"
 }
 
 # 更新域名解析记录值
@@ -757,12 +788,14 @@ function fun_wirte_log(){
 
 # 消息推送
 function fun_push_message(){
-    fun_wirte_log "${message_info_tag}正在推送消息到钉钉......"
-    fun_send_message_to_ding_ding "{'msgtype': 'text','text':{'content': '【域名解析服务-${NOW_DATE}】$1'}}" 
+    if [[ "${var_enable_message_push}" = true ]]; then
+        fun_wirte_log "${message_info_tag}正在推送消息到钉钉......"
+        fun_send_message_to_ding_ding "{'msgtype': 'text','text':{'content': '【域名解析服务-${NOW_DATE}】$1'}}" 
+    fi
+   
 }
 #发送消息到钉钉 fun_send_message_to_ding_ding "内容"
 function fun_send_message_to_ding_ding(){
-    if [[ "${var_enable_message_push}" = true ]]; then
         local timestamp_ms=$(fun_get_current_timestamp_ms)
         local str_to_sign="$timestamp_ms\n$var_push_message_secret"; 
         local sign=$(get_signature "sha256" "$str_to_sign" "$var_push_message_secret")
@@ -779,7 +812,6 @@ function fun_send_message_to_ding_ding(){
         else
            fun_wirte_log "${message_warning_tag}消息推送失败,返回消息:${errmsg}"
         fi
-    fi
 }
 
 # 恢复出厂设置
@@ -798,6 +830,7 @@ function fun_restore_settings(){
     var_enable_message_push=false
     var_push_message_access_token=""
     var_push_message_secret=""
+    var_domain_record_type=""
     fun_wirte_log "${message_success_tag}所有配置项重置成功!"
 }
 
