@@ -178,21 +178,21 @@ function fun_setting_file_save_dir(){
             if [ "${var_is_root_execute}" = true ]; then
                 FILE_SAVE_DIR="/etc/${FILE_DIR_PREFIX}"
             else
-                FILE_SAVE_DIR="~/${FILE_DIR_PREFIX}"
+                FILE_SAVE_DIR=~/"${FILE_DIR_PREFIX}"
             fi
         fi
     fi
-    
+
     if [ ! -d "$FILE_SAVE_DIR" ]; then
         mkdir -p ${FILE_SAVE_DIR}
     fi
 
     if [ "${CONFIG_FILE_PATH}" = "" ]; then
-        CONFIG_FILE_PATH="${FILE_SAVE_DIR}/${CONFIG_FILE_NAME}" 
+        CONFIG_FILE_PATH="${FILE_SAVE_DIR}/${CONFIG_FILE_NAME}"
     fi
 
     if [ "${LOG_FILE_PATH}" = "" ]; then
-        LOG_FILE_PATH="${FILE_SAVE_DIR}/${LOG_FILE_NAME}" 
+        LOG_FILE_PATH="${FILE_SAVE_DIR}/${LOG_FILE_NAME}"
     fi
 }
 
@@ -356,14 +356,14 @@ function fun_check_config_file(){
 # 设置配置文件
 function fun_set_config(){
     # 检测外网畅通ping等域名地址,默认:www.baidu.com
-    if [[ "${var_check_online_url}" = "" ]]; then 
+    if [[ "${var_check_online_url}" = "" ]]; then
         echo -e "\n${message_info_tag}[var_check_online_url]请输入外网检测Ping地址:"
         read -p "(默认:www.baidu.com,如有疑问请输入“-h”查看帮助):" var_check_online_url
         [[ "${var_check_online_url}" = "-h" ]] && fun_help_document "var_check_online_url" && echo -e "${message_info_tag}[var_check_online_url]请输入外网检测Ping地址:" && read -p "(默认:www.baidu.com):" var_check_online_url
         [[ -z "${var_check_online_url}" ]] && echo -e "${message_info_tag}输入为空值,已设置为:“www.baidu.com”" && var_check_online_url="www.baidu.com"
     fi
-     # 检测外网畅通失败重试次数,默认:3  
-    if [[ "${var_check_online_retry_times}" = "" ]]; then 
+     # 检测外网畅通失败重试次数,默认:3
+    if [[ "${var_check_online_retry_times}" = "" ]]; then
         echo -e "\n${message_info_tag}[var_check_online_retry_times]请输入外网检测失败后重试次数:"
         read -p "(默认:3,如有疑问请输入“-h”查看帮助):" var_check_online_retry_times
         [[ "${var_check_online_retry_times}" = "-h" ]] && fun_help_document "var_check_online_retry_times" && echo -e "${message_info_tag}[var_check_online_retry_times]请输入外网检测失败后重试次数:" && read -p "(默认:3):" var_check_online_retry_times
@@ -624,7 +624,7 @@ function fun_help_document(){
             参考:“curl -s http://119.29.29.29/d?dn=\$var_second_level_domain.\$var_first_level_domain”"
             var_domian_server_ip=""
         ;;
-         "var_enable_message_push")  
+         "var_enable_message_push")
             echo -e "${message_info_tag}${color_green_start}[${help_type}]是否启用消息推送-说明${color_end}
             此参数决定是否启用消息通知控制。
             当脚本执行失败或成功将通过钉钉机器人通知。
@@ -660,7 +660,7 @@ function fun_help_document(){
         *)
             echo "无帮助文档"
     esac
-    
+
 }
 
 # 获取当前时间戳
@@ -726,7 +726,7 @@ fun_send_request() {
      else
         fun_wirte_log "${message_warning_tag}阿里云$2接口请求处理失败,返回代码:${code}消息:${message}"
     fi
-    # 获取RecordId时需要过滤出id值 需要打印请求响应信息 
+    # 获取RecordId时需要过滤出id值 需要打印请求响应信息
     if [[ "$4" != "" || "$4" = true ]]; then
         echo $response
     fi
@@ -790,14 +790,14 @@ function fun_wirte_log(){
 function fun_push_message(){
     if [[ "${var_enable_message_push}" = true ]]; then
         fun_wirte_log "${message_info_tag}正在推送消息到钉钉......"
-        fun_send_message_to_ding_ding "{'msgtype': 'text','text':{'content': '【域名解析服务-${NOW_DATE}】$1'}}" 
+        fun_send_message_to_ding_ding "{'msgtype': 'text','text':{'content': '【域名解析服务-${NOW_DATE}】$1'}}"
     fi
-   
+
 }
 #发送消息到钉钉 fun_send_message_to_ding_ding "内容"
 function fun_send_message_to_ding_ding(){
         local timestamp_ms=$(fun_get_current_timestamp_ms)
-        local str_to_sign="$timestamp_ms\n$var_push_message_secret"; 
+        local str_to_sign="$timestamp_ms\n$var_push_message_secret";
         local sign=$(get_signature "sha256" "$str_to_sign" "$var_push_message_secret")
         local encode_sign=$(fun_get_url_encryption "$sign");
         local request_url="$var_push_message_api?access_token=$var_push_message_access_token&timestamp=$timestamp_ms&sign=$encode_sign"
