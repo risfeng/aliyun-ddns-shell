@@ -438,7 +438,7 @@ function fun_set_config(){
         echo -e "\n${message_info_tag}[var_domian_line]请输入域名解析线路:"
         read -p "(默认默认,如有疑问请输入“-h”查看帮助):" var_domian_line
         [[ "${var_domian_line}" = "-h" ]] && fun_help_document "var_domian_line" && echo -e "${message_info_tag}[var_domian_line]请输入域名解析线路:" && read -p "(默认-default):" var_domian_line
-        [[ -z "${var_domian_line}" ]] && echo -e "${message_info_tag}输入为空值,已设置TTL值为:“default”" && var_domian_line="default"
+        [[ -z "${var_domian_line}" ]] && echo -e "${message_info_tag}输入为空值,已设置线路为:“default”" && var_domian_line="default"
     fi
     # 阿里云授权Key
     if [[ "${var_access_key_id}" = "" ]]; then
