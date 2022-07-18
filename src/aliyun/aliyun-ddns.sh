@@ -262,7 +262,7 @@ function fun_is_wan_ip_and_domain_ip_same(){
         if [[ "${var_domian_server_ip}" =~ "${var_local_wan_ip}" ]]; then
             fun_wirte_log "${message_info_tag}当前外网ip:[${var_local_wan_ip}]与${var_second_level_domain}.${var_first_level_domain}($var_domian_server_ip)的ip相同."
             fun_wirte_log "${message_success_tag}本地ip与域名解析ip未发生任何变动,无需更改,程序退出."
-            exit 1
+            exit 0
         fi
     fi
 }
