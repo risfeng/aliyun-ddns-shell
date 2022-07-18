@@ -104,6 +104,8 @@ var_second_level_domain=""
 var_domain_record_type=""
 #域名生效时间,默认:600 单位:秒
 var_domian_ttl=""
+#域名线路,默认为默认
+var_domian_line=""
 #阿里云授权Key
 var_access_key_id=""
 #阿里云授权Key Secret
@@ -249,7 +251,7 @@ function fun_get_local_wan_ip(){
 function fun_get_domian_server_ip(){
     fun_wirte_log "${message_info_tag}正在获取${var_second_level_domain}.${var_first_level_domain}的ip......"
     if [[ "${var_domian_server_ip}" = "nslookup" ]]; then
-        var_domian_server_ip=`nslookup -sil ${var_second_level_domain}.${var_first_level_domain} 2>/dev/null | grep Address: | sed 1d | sed s/Address://g | sed 's/ //g'`
+        var_domian_server_ip=`nslookup -sil ${var_second_level_domain}.${var_first_level_domain} ns2.alidns.com 2>/dev/null | grep Address: | sed 1d | sed s/Address://g | sed 's/ //g'`
     else
         var_domian_server_ip=`${var_domian_server_ip} | sed 's/;/ /g'`
     fi
@@ -337,6 +339,7 @@ function fun_check_config_file(){
         #加载配置文件
         source ${CONFIG_FILE_PATH}
         if [[ "${var_first_level_domain}" = "" ]] || [[ "${var_second_level_domain}" = "" ]] || [[ "${var_domian_ttl}" = "" ]] \
+		|| [[ "${var_domian_line}" = "" ]] \
         || [[ "${var_access_key_id}" = "" ]] || [[ "${var_access_key_secret}" = "" ]] || [[ "${var_local_wan_ip}" = "" ]] \
         || [[ "${var_domian_server_ip}" = "" ]] || [[ "${var_check_online_url}" = "" ]] || [[ "${var_check_online_retry_times}" = "" ]] \
         || [[ "${var_aliyun_ddns_api_host}" = "" ]] \
@@ -429,6 +432,13 @@ function fun_set_config(){
         read -p "(默认600,如有疑问请输入“-h”查看帮助):" var_domian_ttl
         [[ "${var_domian_ttl}" = "-h" ]] && fun_help_document "var_domian_ttl" && echo -e "${message_info_tag}[var_domian_ttl]请输入域名解析记录生效时间(TTL Time-To-Live)秒:" && read -p "(默认600):" var_domian_ttl
         [[ -z "${var_domian_ttl}" ]] && echo -e "${message_info_tag}输入为空值,已设置TTL值为:“600”" && var_domian_ttl="600"
+    fi
+	# 域名线路,默认:默认
+    if [[ "${var_domian_line}" = "" ]]; then
+        echo -e "\n${message_info_tag}[var_domian_line]请输入域名解析线路:"
+        read -p "(默认默认,如有疑问请输入“-h”查看帮助):" var_domian_line
+        [[ "${var_domian_line}" = "-h" ]] && fun_help_document "var_domian_line" && echo -e "${message_info_tag}[var_domian_line]请输入域名解析线路:" && read -p "(默认-default):" var_domian_line
+        [[ -z "${var_domian_line}" ]] && echo -e "${message_info_tag}输入为空值,已设置线路为:“default”" && var_domian_line="default"
     fi
     # 阿里云授权Key
     if [[ "${var_access_key_id}" = "" ]]; then
@@ -541,6 +551,7 @@ function fun_save_config(){
     var_second_level_domain="${var_second_level_domain}"
     var_domain_record_type="${var_domain_record_type}"
     var_domian_ttl="${var_domian_ttl}"
+    var_domian_line="${var_domian_line}"
     var_access_key_id="${var_access_key_id}"
     var_access_key_secret="${var_access_key_secret}"
     var_local_wan_ip="${var_local_wan_ip}"
@@ -592,6 +603,20 @@ function fun_help_document(){
             收费版产品可根据所购买的云解析企业版产品配置设置为 (1-86400) (即1秒-1天)
             请免费版用户不要设置TTL低于600秒,会导致运行报错!\n"
             var_domian_ttl=""
+        ;;
+        "var_domian_line")
+            echo -e "${message_info_tag}${color_green_start}[${help_type}]域名解析线路-说明${color_end}
+            此参数决定你要修改的DDNS记录中,解析线路，默认为default\n
+				线路值	线路中文说明\n
+				default	默认\n\t
+				telecom	电信\n\t
+				unicom	联通\n\t
+				mobile	移动\n\t
+				oversea	海外\n\t
+				edu	教育网\n\t
+				drpeng	鹏博士\n\t
+				btvn	广电网\n"
+            var_domian_line=""
         ;;
         "var_access_key_id")
             echo -e "${message_info_tag}${color_green_start}[${help_type}]AccessKeyId-说明${color_end}
@@ -703,12 +728,12 @@ function fun_get_uuid(){
 
 # json转换函数 fun_parse_json "json" "key_name"
 function fun_parse_json(){
-    echo "${1//\"/}" | sed "s/.*$2:\([^,}]*\).*/\1/"
+    echo "${1//\"/}" | grep "$2" |  sed "s/.*$2:\([^,}]*\).*/\1/"
 }
 
 # 发送请求 eg:fun_send_request "GET" "Action" "动态请求参数（看说明）" "控制是否打印请求响应信息：true false"
 fun_send_request() {
-    local args="AccessKeyId=$var_access_key_id&Action=$2&Format=json&$3&Version=2015-01-09"
+    local args="$3"
     local message="$1&$(fun_get_url_encryption "/")&$(fun_get_url_encryption "$args")"
     local key="$var_access_key_secret&"
     local string_to_sign=$(get_signature "sha1" "$message" "$key")
@@ -720,15 +745,20 @@ fun_send_request() {
 
     local code=$(fun_parse_json "$response" "Code")
     local message=$(fun_parse_json "$response" "Message")
+	
 
-    if [[ "$code" = "" ]]; then
-        fun_wirte_log "${message_success_tag}阿里云$2接口请求处理成功,返回消息:${message}"
-     else
-        fun_wirte_log "${message_warning_tag}阿里云$2接口请求处理失败,返回代码:${code}消息:${message}"
-    fi
     # 获取RecordId时需要过滤出id值 需要打印请求响应信息
     if [[ "$4" != "" || "$4" = true ]]; then
         echo $response
+	else
+	    if [[ "$message" = "" ]]; then
+			local message="$response"
+		fi
+		if [[ "$code" = "" ]]; then
+			fun_wirte_log "${message_success_tag}阿里云$2接口请求处理成功,返回消息:${message}"
+		 else
+			fun_wirte_log "${message_warning_tag}阿里云$2接口请求处理失败,返回代码:${code}消息:${message}"
+		fi
     fi
 }
 
@@ -739,12 +769,13 @@ function fun_get_record_id_regx() {
 
 # 查询域名解析记录值请求
 function fun_query_record_id_send() {
-    local query_url="SignatureMethod=HMAC-SHA1&SignatureNonce=$(fun_get_uuid)&SignatureVersion=1.0&SubDomain=$var_second_level_domain.$var_first_level_domain&Timestamp=$var_now_timestamp"
+    local query_url="AccessKeyId=$var_access_key_id&Action=DescribeSubDomainRecords&DomainName=$var_first_level_domain&Format=json&SignatureMethod=HMAC-SHA1&SignatureNonce=$(fun_get_uuid)&SignatureVersion=1.0&SubDomain=$var_second_level_domain.$var_first_level_domain&Timestamp=$var_now_timestamp&Version=2015-01-09"
     fun_send_request "GET" "DescribeSubDomainRecords" ${query_url} true
 }
 # 更新域名解析记录值请求 fun_update_record "record_id"
 function fun_update_record_send() {
-    fun_send_request "GET" "UpdateDomainRecord" "RR=$var_second_level_domain&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$(fun_get_uuid)&SignatureVersion=1.0&TTL=$var_domian_ttl&Timestamp=$var_now_timestamp&Type=$var_domain_record_type&Value=$var_local_wan_ip"
+    local query_url="AccessKeyId=$var_access_key_id&Action=UpdateDomainRecord&Format=json&Line=$var_domian_line&RR=$var_second_level_domain&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$(fun_get_uuid)&SignatureVersion=1.0&TTL=$var_domian_ttl&Timestamp=$var_now_timestamp&Type=$var_domain_record_type&Value=$var_local_wan_ip&Version=2015-01-09"
+    fun_send_request "GET" "UpdateDomainRecord" ${query_url}
 }
 
 # 更新域名解析记录值
@@ -823,6 +854,7 @@ function fun_restore_settings(){
     var_first_level_domain=""
     var_second_level_domain=""
     var_domian_ttl=""
+    var_domian_line=""
     var_access_key_id=""
     var_access_key_secret=""
     var_local_wan_ip=""
