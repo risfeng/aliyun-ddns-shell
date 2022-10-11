@@ -103,9 +103,9 @@ var_second_level_domain=""
 # 域名解析类型：A、NS、MX、TXT、CNAME、SRV、AAAA、CAA、REDIRECT_URL、FORWARD_URL
 var_domain_record_type=""
 #域名生效时间,默认:600 单位:秒
-var_domian_ttl=""
+var_domain_ttl=""
 #域名线路,默认为默认
-var_domian_line=""
+var_domain_line=""
 #阿里云授权Key
 var_access_key_id=""
 #阿里云授权Key Secret
@@ -115,9 +115,9 @@ var_aliyun_ddns_api_host="https://alidns.aliyuncs.com"
 #获取本机外网IP的shell命令,不能带有双引号 默认:"curl -s http://members.3322.org/dyndns/getip"
 var_local_wan_ip=""
 #获取ddns域名当前的解析记录的shell命令,支持数组,不能带有双引号  默认:使用nslookup获取
-var_domian_server_ip=""
+var_domain_server_ip=""
 #域名解析记录Id
-var_domian_record_id=""
+var_domain_record_id=""
 
 #消息推送配置,使用阿里钉钉
 
@@ -248,21 +248,21 @@ function fun_get_local_wan_ip(){
 }
 
 # 获取DDNS域名当前解析记录IP
-function fun_get_domian_server_ip(){
+function fun_get_domain_server_ip(){
     fun_wirte_log "${message_info_tag}正在获取${var_second_level_domain}.${var_first_level_domain}的ip......"
-    if [[ "${var_domian_server_ip}" = "nslookup" ]]; then
-        var_domian_server_ip=`nslookup -sil ${var_second_level_domain}.${var_first_level_domain} ns2.alidns.com 2>/dev/null | grep Address: | sed 1d | sed s/Address://g | sed 's/ //g'`
+    if [[ "${var_domain_server_ip}" = "nslookup" ]]; then
+        var_domain_server_ip=`nslookup -sil ${var_second_level_domain}.${var_first_level_domain} ns2.alidns.com 2>/dev/null | grep Address: | sed 1d | sed s/Address://g | sed 's/ //g'`
     else
-        var_domian_server_ip=`${var_domian_server_ip} | sed 's/;/ /g'`
+        var_domain_server_ip=`${var_domain_server_ip} | sed 's/;/ /g'`
     fi
-    fun_wirte_log "${message_info_tag}域名${var_second_level_domain}.${var_first_level_domain}的当前ip:${var_domian_server_ip}"
+    fun_wirte_log "${message_info_tag}域名${var_second_level_domain}.${var_first_level_domain}的当前ip:${var_domain_server_ip}"
 }
 
 # 判断当前外网ip与域名到服务ip是否相同
 function fun_is_wan_ip_and_domain_ip_same(){
-    if [[ "${var_domian_server_ip}" != "" ]]; then
-        if [[ "${var_domian_server_ip}" =~ "${var_local_wan_ip}" ]]; then
-            fun_wirte_log "${message_info_tag}当前外网ip:[${var_local_wan_ip}]与${var_second_level_domain}.${var_first_level_domain}($var_domian_server_ip)的ip相同."
+    if [[ "${var_domain_server_ip}" != "" ]]; then
+        if [[ "${var_domain_server_ip}" =~ "${var_local_wan_ip}" ]]; then
+            fun_wirte_log "${message_info_tag}当前外网ip:[${var_local_wan_ip}]与${var_second_level_domain}.${var_first_level_domain}($var_domain_server_ip)的ip相同."
             fun_wirte_log "${message_success_tag}本地ip与域名解析ip未发生任何变动,无需更改,程序退出."
             exit 0
         fi
@@ -338,10 +338,10 @@ function fun_check_config_file(){
        fun_wirte_log "${message_info_tag}检测到配置文件,自动加载现有配置信息。可通过菜单选项【恢复出厂设置】重置."
         #加载配置文件
         source ${CONFIG_FILE_PATH}
-        if [[ "${var_first_level_domain}" = "" ]] || [[ "${var_second_level_domain}" = "" ]] || [[ "${var_domian_ttl}" = "" ]] \
-		|| [[ "${var_domian_line}" = "" ]] \
+        if [[ "${var_first_level_domain}" = "" ]] || [[ "${var_second_level_domain}" = "" ]] || [[ "${var_domain_ttl}" = "" ]] \
+		|| [[ "${var_domain_line}" = "" ]] \
         || [[ "${var_access_key_id}" = "" ]] || [[ "${var_access_key_secret}" = "" ]] || [[ "${var_local_wan_ip}" = "" ]] \
-        || [[ "${var_domian_server_ip}" = "" ]] || [[ "${var_check_online_url}" = "" ]] || [[ "${var_check_online_retry_times}" = "" ]] \
+        || [[ "${var_domain_server_ip}" = "" ]] || [[ "${var_check_online_url}" = "" ]] || [[ "${var_check_online_retry_times}" = "" ]] \
         || [[ "${var_aliyun_ddns_api_host}" = "" ]] \
         || [[ "${var_enable_message_push}" = true && "${var_push_message_access_token}" = "" && "${var_push_message_secret}" = "" ]] \
         || [[ "${var_check_online_url}" = "" ]] \
@@ -427,18 +427,18 @@ function fun_set_config(){
         done
     fi
     # 域名生效时间,默认:600
-    if [[ "${var_domian_ttl}" = "" ]]; then
-        echo -e "\n${message_info_tag}[var_domian_ttl]请输入域名解析记录生效时间(TTL Time-To-Live)秒:"
-        read -p "(默认600,如有疑问请输入“-h”查看帮助):" var_domian_ttl
-        [[ "${var_domian_ttl}" = "-h" ]] && fun_help_document "var_domian_ttl" && echo -e "${message_info_tag}[var_domian_ttl]请输入域名解析记录生效时间(TTL Time-To-Live)秒:" && read -p "(默认600):" var_domian_ttl
-        [[ -z "${var_domian_ttl}" ]] && echo -e "${message_info_tag}输入为空值,已设置TTL值为:“600”" && var_domian_ttl="600"
+    if [[ "${var_domain_ttl}" = "" ]]; then
+        echo -e "\n${message_info_tag}[var_domain_ttl]请输入域名解析记录生效时间(TTL Time-To-Live)秒:"
+        read -p "(默认600,如有疑问请输入“-h”查看帮助):" var_domain_ttl
+        [[ "${var_domain_ttl}" = "-h" ]] && fun_help_document "var_domain_ttl" && echo -e "${message_info_tag}[var_domain_ttl]请输入域名解析记录生效时间(TTL Time-To-Live)秒:" && read -p "(默认600):" var_domain_ttl
+        [[ -z "${var_domain_ttl}" ]] && echo -e "${message_info_tag}输入为空值,已设置TTL值为:“600”" && var_domain_ttl="600"
     fi
 	# 域名线路,默认:默认
-    if [[ "${var_domian_line}" = "" ]]; then
-        echo -e "\n${message_info_tag}[var_domian_line]请输入域名解析线路:"
-        read -p "(默认默认,如有疑问请输入“-h”查看帮助):" var_domian_line
-        [[ "${var_domian_line}" = "-h" ]] && fun_help_document "var_domian_line" && echo -e "${message_info_tag}[var_domian_line]请输入域名解析线路:" && read -p "(默认-default):" var_domian_line
-        [[ -z "${var_domian_line}" ]] && echo -e "${message_info_tag}输入为空值,已设置线路为:“default”" && var_domian_line="default"
+    if [[ "${var_domain_line}" = "" ]]; then
+        echo -e "\n${message_info_tag}[var_domain_line]请输入域名解析线路:"
+        read -p "(默认默认,如有疑问请输入“-h”查看帮助):" var_domain_line
+        [[ "${var_domain_line}" = "-h" ]] && fun_help_document "var_domain_line" && echo -e "${message_info_tag}[var_domain_line]请输入域名解析线路:" && read -p "(默认-default):" var_domain_line
+        [[ -z "${var_domain_line}" ]] && echo -e "${message_info_tag}输入为空值,已设置线路为:“default”" && var_domain_line="default"
     fi
     # 阿里云授权Key
     if [[ "${var_access_key_id}" = "" ]]; then
@@ -484,11 +484,11 @@ function fun_set_config(){
         [[ -z "${var_local_wan_ip}" ]] && echo -e "${message_info_tag}输入为空值,已设置执行命令为:“curl -s http://members.3322.org/dyndns/getip”" && var_local_wan_ip="curl -s http://members.3322.org/dyndns/getip"
     fi
     # 获取ddns域名当前的解析记录的shell命令
-    if [[ "${var_domian_server_ip}" = "" ]]; then
-        echo -e "\n${message_info_tag}[var_domian_server_ip]请输入获取域名当前解析记录的IP使用的命令(建议默认)"
-        read -p "(如有疑问请输入“-h”查看帮助):" var_domian_server_ip
-        [[ "${var_domian_server_ip}" = "-h" ]] && fun_help_document "var_domian_server_ip" && echo -e "${message_info_tag}[var_domian_server_ip]请输入获取域名当前解析记录的IP使用的命令(建议默认)" && read -p "(如有疑问请输入“-h”查看帮助):" var_domian_server_ip
-        [[ -z "${var_domian_server_ip}" ]] && echo -e "${message_info_tag}输入为空值,已设置执行命令为:“nslookup“" && var_domian_server_ip="nslookup"
+    if [[ "${var_domain_server_ip}" = "" ]]; then
+        echo -e "\n${message_info_tag}[var_domain_server_ip]请输入获取域名当前解析记录的IP使用的命令(建议默认)"
+        read -p "(如有疑问请输入“-h”查看帮助):" var_domain_server_ip
+        [[ "${var_domain_server_ip}" = "-h" ]] && fun_help_document "var_domain_server_ip" && echo -e "${message_info_tag}[var_domain_server_ip]请输入获取域名当前解析记录的IP使用的命令(建议默认)" && read -p "(如有疑问请输入“-h”查看帮助):" var_domain_server_ip
+        [[ -z "${var_domain_server_ip}" ]] && echo -e "${message_info_tag}输入为空值,已设置执行命令为:“nslookup“" && var_domain_server_ip="nslookup"
     fi
 
     # 是否启用消息推送,默认:false
@@ -550,12 +550,12 @@ function fun_save_config(){
     var_first_level_domain="${var_first_level_domain}"
     var_second_level_domain="${var_second_level_domain}"
     var_domain_record_type="${var_domain_record_type}"
-    var_domian_ttl="${var_domian_ttl}"
-    var_domian_line="${var_domian_line}"
+    var_domain_ttl="${var_domain_ttl}"
+    var_domain_line="${var_domain_line}"
     var_access_key_id="${var_access_key_id}"
     var_access_key_secret="${var_access_key_secret}"
     var_local_wan_ip="${var_local_wan_ip}"
-    var_domian_server_ip="${var_domian_server_ip}"
+    var_domain_server_ip="${var_domain_server_ip}"
     var_enable_message_push=${var_enable_message_push}
     var_push_message_access_token="${var_push_message_access_token}"
     var_push_message_secret="${var_push_message_secret}"
@@ -595,16 +595,16 @@ function fun_help_document(){
             例如:A\n"
             var_domain_record_type=""
         ;;
-        "var_domian_ttl")
+        "var_domain_ttl")
             echo -e "${message_info_tag}${color_green_start}[${help_type}]域名生效时间TTL-说明${color_end}
             此参数决定你要修改的DDNS记录中,TTL(Time-To-Line)时长。
             越短的TTL,DNS更新生效速度越快 (但也不是越快越好,因情况而定)
             免费版产品可设置为 (600-86400) (即10分钟-1天)
             收费版产品可根据所购买的云解析企业版产品配置设置为 (1-86400) (即1秒-1天)
             请免费版用户不要设置TTL低于600秒,会导致运行报错!\n"
-            var_domian_ttl=""
+            var_domain_ttl=""
         ;;
-        "var_domian_line")
+        "var_domain_line")
             echo -e "${message_info_tag}${color_green_start}[${help_type}]域名解析线路-说明${color_end}
             此参数决定你要修改的DDNS记录中,解析线路，默认为default\n
 				线路值	线路中文说明\n
@@ -616,7 +616,7 @@ function fun_help_document(){
 				edu	教育网\n\t
 				drpeng	鹏博士\n\t
 				btvn	广电网\n"
-            var_domian_line=""
+            var_domain_line=""
         ;;
         "var_access_key_id")
             echo -e "${message_info_tag}${color_green_start}[${help_type}]AccessKeyId-说明${color_end}
@@ -641,13 +641,13 @@ function fun_help_document(){
             你也可以自定义获取IP方式。输入格式为需要执行的命令且不能出现双引号(\")。"
             var_local_wan_ip=""
         ;;
-        "var_domian_server_ip")
+        "var_domain_server_ip")
             echo -e "${message_info_tag}${color_green_start}[${help_type}]域名当前解析IP-说明${color_end}
             此参数决定如何获取到DDNS域名当前的解析记录。
             默认使用“nslookup”作为获取域名当前解析IP的方式,如不了解请使用默认方式。
             你也可以自定义获取域名当前解析IP方式。输入格式为需要执行的命令且不能出现双引号(\")。
             参考:“curl -s http://119.29.29.29/d?dn=\$var_second_level_domain.\$var_first_level_domain”"
-            var_domian_server_ip=""
+            var_domain_server_ip=""
         ;;
          "var_enable_message_push")
             echo -e "${message_info_tag}${color_green_start}[${help_type}]是否启用消息推送-说明${color_end}
@@ -732,7 +732,7 @@ function fun_parse_json(){
 }
 
 # 发送请求 eg:fun_send_request "GET" "Action" "动态请求参数（看说明）" "控制是否打印请求响应信息：true false"
-fun_send_request() {
+function fun_send_request() {
     local args="$3"
     local message="$1&$(fun_get_url_encryption "/")&$(fun_get_url_encryption "$args")"
     local key="$var_access_key_secret&"
@@ -774,27 +774,32 @@ function fun_query_record_id_send() {
 }
 # 更新域名解析记录值请求 fun_update_record "record_id"
 function fun_update_record_send() {
-    local query_url="AccessKeyId=$var_access_key_id&Action=UpdateDomainRecord&Format=json&Line=$var_domian_line&RR=$var_second_level_domain&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$(fun_get_uuid)&SignatureVersion=1.0&TTL=$var_domian_ttl&Timestamp=$var_now_timestamp&Type=$var_domain_record_type&Value=$var_local_wan_ip&Version=2015-01-09"
+    if [[ "$var_domain_record_type" = "AAAA" ]]; then
+        local var_AAAA_record_value=$(fun_get_url_encryption "$var_local_wan_ip")
+        local query_url="AccessKeyId=$var_access_key_id&Action=UpdateDomainRecord&Format=json&Line=$var_domain_line&RR=$var_second_level_domain&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$(fun_get_uuid)&SignatureVersion=1.0&TTL=$var_domain_ttl&Timestamp=$var_now_timestamp&Type=$var_domain_record_type&Value=$var_AAAA_record_value&Version=2015-01-09"
+    else
+        local query_url="AccessKeyId=$var_access_key_id&Action=UpdateDomainRecord&Format=json&Line=$var_domain_line&RR=$var_second_level_domain&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$(fun_get_uuid)&SignatureVersion=1.0&TTL=$var_domain_ttl&Timestamp=$var_now_timestamp&Type=$var_domain_record_type&Value=$var_local_wan_ip&Version=2015-01-09"
+    fi
     fun_send_request "GET" "UpdateDomainRecord" ${query_url}
 }
 
 # 更新域名解析记录值
 function fun_update_record(){
     fun_wirte_log "${message_info_tag}正在更新域名解析记录值......"
-    if [[ "${var_domian_record_id}" = "" ]]; then
+    if [[ "${var_domain_record_id}" = "" ]]; then
         fun_wirte_log "${message_info_tag}正在获取record_id......"
-        var_domian_record_id=`fun_query_record_id_send | fun_get_record_id_regx`
-        if [[ "${var_domian_record_id}" = "" ]]; then
-            fun_wirte_log "${message_warning_tag}获取record_id为空,可能没有获取到有效的解析记录(record_id=$var_domian_record_id)"
+        var_domain_record_id=`fun_query_record_id_send | fun_get_record_id_regx`
+        if [[ "${var_domain_record_id}" = "" ]]; then
+            fun_wirte_log "${message_warning_tag}获取record_id为空,可能没有获取到有效的解析记录(record_id=$var_domain_record_id)"
         else
-            fun_wirte_log "${message_info_tag}获取到到record_id=$var_domian_record_id"
+            fun_wirte_log "${message_info_tag}获取到到record_id=$var_domain_record_id"
             fun_wirte_log "${message_info_tag}正在更新解析记录:[$var_second_level_domain.$var_first_level_domain]的ip为[$var_local_wan_ip]......"
-            fun_update_record_send ${var_domian_record_id}
-            fun_wirte_log "${message_info_tag}已经更新record_id=${var_domian_record_id}的记录"
+            fun_update_record_send ${var_domain_record_id}
+            fun_wirte_log "${message_info_tag}已经更新record_id=${var_domain_record_id}的记录"
         fi
     fi
-    if [[ "${var_domian_record_id}" = "" ]]; then
-        # 未能获取到domian_record_id
+    if [[ "${var_domain_record_id}" = "" ]]; then
+        # 未能获取到domain_record_id
         fun_wirte_log "${message_fail_tag}域名解析记录更新失败!"
         fun_push_message "[失败]域名解析记录更新失败,获取的record_id为空，请检查域名解析记录是否存在或配置的阿里云access_key_id是否禁用或变更!"
         exit 1
@@ -853,12 +858,12 @@ function fun_restore_settings(){
     var_is_support_sudo=false
     var_first_level_domain=""
     var_second_level_domain=""
-    var_domian_ttl=""
-    var_domian_line=""
+    var_domain_ttl=""
+    var_domain_line=""
     var_access_key_id=""
     var_access_key_secret=""
     var_local_wan_ip=""
-    var_domian_server_ip=""
+    var_domain_server_ip=""
     var_enable_message_push=false
     var_push_message_access_token=""
     var_push_message_secret=""
@@ -883,7 +888,7 @@ function main_fun_config_and_run(){
     fun_save_config
     fun_check_online
     fun_get_local_wan_ip
-    fun_get_domian_server_ip
+    fun_get_domain_server_ip
     fun_get_now_timestamp
     fun_is_wan_ip_and_domain_ip_same
     fun_update_record
@@ -900,7 +905,7 @@ function main_fun_only_run(){
     fun_install_run_environment
     fun_check_online
     fun_get_local_wan_ip
-    fun_get_domian_server_ip
+    fun_get_domain_server_ip
     fun_get_now_timestamp
     fun_is_wan_ip_and_domain_ip_same
     fun_update_record
