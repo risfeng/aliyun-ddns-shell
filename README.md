@@ -14,7 +14,7 @@
 - 需要通过阿里云域名解析Api操作，所以需要申请阿里云的Acesskeys
     - 登录阿里云 控制台 https://account.aliyun.com/login/login.htm
     - 新建子账号（随你，用主账号也行）https://ram.console.aliyun.com/users
-    - 创建新的AccessKey https://ram.console.aliyun.com/users/domian
+    - 创建新的AccessKey https://ram.console.aliyun.com/users/domain
     - 给子账号授权：权限管理-个人权限 权限策略名称：AliyunDNSFullAccess
 - 运行自动解析域名脚本
     - git clone https://github.com/risfeng/aliyun-ddns-shell.git
